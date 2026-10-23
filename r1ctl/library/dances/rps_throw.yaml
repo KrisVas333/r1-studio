@@ -1,0 +1,10 @@
+kind: dance
+title: Rock-paper-scissors (no camera) — robot throws a random hand
+steps:
+  - say: "Rock, paper, scissors!"
+  - hand: {side: right, pose: fist, ms: 300}
+  - wait: 1.5
+  - random:
+      - hand: {side: right, pose: rock, ms: 250}
+      - hand: {side: right, pose: paper, ms: 250}
+      - hand: {side: right, pose: scissors, ms: 250}

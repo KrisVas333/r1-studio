@@ -1,0 +1,13 @@
+kind: dance
+title: Carry demo — take a LIGHT soft object (paper cup, plush) and hold it
+# Adult places the object. Never a person's hand, never anything sharp, hot or heavy.
+steps:
+  - hand: {side: right, pose: open, ms: 800}
+  - say: "Please place it in my hand."
+  - wait: 4
+  - grab: {side: right, strength: 0.6, ms: 1500}
+  - say: "Got it!"
+  - wait: 5
+  - say: "Please take it back."
+  - wait: 3
+  - release: {side: right}

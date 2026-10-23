@@ -1,0 +1,7 @@
+kind: dance
+title: Own arm move (recorded CSV) + hands
+steps:
+  - parallel:
+      - arm_traj: {file: wave_demo, speed: 1.0}
+      - hand: {side: right, pose: open}
+  - hand: {side: right, pose: thumbs_up}

@@ -1,0 +1,7 @@
+#!/bin/bash
+# Preview a dance or arm move on the R1 simulator before it goes to the robot.
+#   ~/r1/preview <dance|file.csv>          → check + MP4 video (opens)
+#   ~/r1/preview <dance> live              → 3D window you can rotate
+cd "$(dirname "$0")/sim"
+if [ "$2" = "live" ]; then exec .venv/bin/mjpython r1sim.py view "$1"; fi
+exec .venv/bin/python r1sim.py video "$1"

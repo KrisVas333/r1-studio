@@ -1,0 +1,11 @@
+kind: dance
+title: Greeting — handshake gesture + open hands + hello
+# arm preset ids from the SDK example (27 = shake hand, 99 = release). Run `r1_arm_action_example eth0 --list` on the robot to see yours.
+steps:
+  - led: [0, 120, 255]
+  - parallel:
+      - arm_preset: 27
+      - hand: {side: both, pose: open, ms: 800}
+  - say: "Hello! I am R1."
+  - wait: 1
+  - arm_preset: 99

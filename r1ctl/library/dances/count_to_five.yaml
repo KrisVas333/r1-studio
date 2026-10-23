@@ -1,0 +1,15 @@
+kind: dance
+title: Counts 1-5 on the right hand
+steps:
+  - hand: {side: right, pose: fist}
+  - say: "Let's count!"
+  - hand: {side: right, pose: one, ms: 400}
+  - wait: 0.6
+  - hand: {side: right, pose: two, ms: 400}
+  - wait: 0.6
+  - hand: {side: right, pose: three, ms: 400}
+  - wait: 0.6
+  - hand: {side: right, pose: four, ms: 400}
+  - wait: 0.6
+  - hand: {side: right, pose: five, ms: 400}
+  - say: "Five!"

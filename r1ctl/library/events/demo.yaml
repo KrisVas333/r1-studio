@@ -1,0 +1,12 @@
+kind: event
+title: R1 show
+items:
+  1: {label: "Hello", dance: hello}
+  2: {label: "Count to five", dance: count_to_five}
+  3: {label: "Dance + joke", dance: party}
+  4: {label: "Rock paper scissors", dance: rps_throw}
+  5: {label: "Wave (own move)", dance: wave_demo}
+  6: {label: "Hold a cup", dance: hold_cup}
+  7: {label: "Thumbs up", steps: [{hand: {side: right, pose: thumbs_up}}]}
+  8: {label: "Tell a joke", steps: [{random: [{say: "What is a robot's favourite snack? Micro-chips."}, {say: "I don't have a brain. I have a very fast guess."}]}]}
+  9: {label: "Goodbye", steps: [{say: "Thank you! Goodbye!"}, {hand: {side: both, pose: open}}]}

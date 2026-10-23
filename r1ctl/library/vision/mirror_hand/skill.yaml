@@ -1,0 +1,4 @@
+name: mirror_hand
+title: Robot hand copies the person's fingers
+needs: [opencv, mediapipe]
+side: right

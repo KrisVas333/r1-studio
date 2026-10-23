@@ -1,0 +1,22 @@
+# third-party (clone instructions in README.md)
+unitree_sdk2/
+unitree_sdk2-modified/
+brainco_hand_service/
+unitree-r1-brainco-hands/
+sim/unitree_mujoco/
+sim/.venv/
+# build output / caches
+build/
+build-docker/
+build*/
+bin/
+r1ctl/bin/
+r1ctl/cache/
+sim/previews/
+studio/projects/
+__pycache__/
+*.pyc
+.DS_Store
+# secrets never live here (keys are in ~/.config/*)
+*.key
+.env

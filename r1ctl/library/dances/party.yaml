@@ -1,0 +1,15 @@
+kind: dance
+title: Factory dance 1 + hand show + a joke
+# ⚠️ FSM 601 = Dance 1 per community sources; confirm on our firmware before an audience.
+steps:
+  - say: "Music time!"
+  - fsm: 601
+  - wait: 12
+  - parallel:
+      - hand: {side: left, pose: rock_on}
+      - hand: {side: right, pose: peace}
+  - random:
+      - say: "Why did the robot go on holiday? It needed to recharge."
+      - say: "I tried to dance like a human. My elbows filed a complaint."
+      - say: "I am not a robot dancer. I am a dancer who happens to be a robot."
+  - hand: {side: both, pose: open, ms: 1000}

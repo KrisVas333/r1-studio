@@ -1,0 +1,8 @@
+# r1ctl settings (edit on the robot's PC2)
+iface: eth0              # PC2 network interface: run `ip -br link` (eth0 or eth10)
+sdk_bin: ~/r1-kit/unitree_sdk2/build/bin
+camera: 0                # OpenCV source: 0 = first USB camera, or an RTSP/UDP URL, or a video file
+eleven_voice: 4IODp0ntCcYJIRzjBGVV   # Kris Pro voice (ElevenLabs). Empty = robot built-in English TTS
+voice_fx: robot          # robot = tin-can Bender-style effect · none = clean voice
+eleven_model: eleven_v4_turbo
+llm_model: claude-sonnet-5-5

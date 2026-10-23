@@ -1,0 +1,4 @@
+name: rock_paper_scissors
+title: Play rock-paper-scissors with a person (camera sees their hand)
+needs: [opencv, mediapipe]
+side: right

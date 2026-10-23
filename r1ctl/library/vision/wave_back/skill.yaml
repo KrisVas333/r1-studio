@@ -1,0 +1,4 @@
+name: wave_back
+title: Someone waves at the camera → robot greets back
+needs: [opencv, mediapipe]
+dance: hello

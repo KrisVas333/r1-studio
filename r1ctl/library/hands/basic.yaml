@@ -1,0 +1,20 @@
+kind: hands
+# 6 values 0..1 = [Thumb, Thumb_aux, Index, Middle, Ring, Pinky]
+# ⚠️ 0 = open, 1 = closed (from Unitree's test; confirm with `r1ctl hand right open` first)
+poses:
+  open:      [0, 0, 0, 0, 0, 0]
+  fist:      [1, 1, 1, 1, 1, 1]
+  rock:      [1, 1, 1, 1, 1, 1]
+  paper:     [0, 0, 0, 0, 0, 0]
+  scissors:  [1, 1, 0, 0, 1, 1]
+  point:     [1, 1, 0, 1, 1, 1]
+  peace:     [1, 1, 0, 0, 1, 1]
+  thumbs_up: [0, 0, 1, 1, 1, 1]
+  rock_on:   [1, 1, 0, 1, 1, 0]
+  ok:        [0.6, 0.6, 0.6, 0, 0, 0]
+  one:       [1, 1, 0, 1, 1, 1]
+  two:       [1, 1, 0, 0, 1, 1]
+  three:     [1, 1, 0, 0, 0, 1]
+  four:      [1, 1, 0, 0, 0, 0]
+  five:      [0, 0, 0, 0, 0, 0]
+  soft_grip: [0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
