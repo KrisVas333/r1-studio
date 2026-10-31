@@ -4,6 +4,7 @@
     python3 server.py                 # simulator only (Mac or robot), http://localhost:8080
     python3 server.py --live          # on the robot's PC2: blocks can drive the real R1
     python3 server.py --camera 0      # stream an OpenCV camera to the app (robot or USB cam)
+    python3 server.py --joga ~/r1-kit/r1-joga   # also serve the R1 yoga app at /joga/ (auto-found if omitted)
 
 Only Python stdlib + PyYAML (+ OpenCV for --camera). Open the printed address in Chrome.
 """
@@ -21,7 +22,17 @@ WEB = os.path.join(HERE, "web")
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "r1ctl"))
 import r1ctl  # noqa: E402
 
-STATE = {"live": False, "robot": None, "log": [], "busy": threading.Lock(), "camera": None}
+STATE = {"live": False, "robot": None, "log": [], "busy": threading.Lock(), "camera": None, "joga": None}
+
+
+def find_joga(cli=None):
+    """R1 yoga app folder: --joga, then config `joga_dir`, then ~/r1-kit/r1-joga, <kit>/r1-joga, sibling clone."""
+    cands = [cli, r1ctl.config().get("joga_dir"), "~/r1-kit/r1-joga",
+             os.path.join(os.path.dirname(HERE), "r1-joga"), os.path.join(os.path.dirname(os.path.dirname(HERE)), "r1-joga")]
+    for c in cands:
+        if c and os.path.isfile(os.path.join(os.path.expanduser(c), "index.html")):
+            return os.path.realpath(os.path.expanduser(c))
+    return None
 
 
 def log(line):
@@ -78,8 +89,24 @@ class Camera:
 
 
 class Handler(SimpleHTTPRequestHandler):
+    # explicit types: Windows registries often map .js to text/plain, which breaks ES modules
+    extensions_map = dict(SimpleHTTPRequestHandler.extensions_map, **{
+        ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".mp3": "audio/mpeg",
+        ".wav": "audio/wav", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".css": "text/css"})
+
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=WEB, **kw)
+
+    def translate_path(self, path):
+        """/joga/... → the r1-joga folder (read-only static files); everything else → studio/web."""
+        p = path.split("?", 1)[0].split("#", 1)[0]
+        if STATE["joga"] and (p == "/joga" or p.startswith("/joga/")):
+            rel = p[len("/joga"):] or "/"
+            full = os.path.realpath(super().translate_path(rel).replace(os.path.realpath(WEB), STATE["joga"], 1))
+            if full == STATE["joga"] or full.startswith(STATE["joga"] + os.sep):
+                return full
+            return os.path.join(STATE["joga"], "__nope__")
+        return super().translate_path(path)
 
     def log_message(self, *a):
         pass
@@ -248,6 +275,7 @@ def run_step(data):
     r1ctl.validate_steps([step], "block")
     live = bool(data.get("live")) and STATE["live"]
     if not live:
+        log("🧪 dry-run step (nothing moves): %s" % json.dumps(step, ensure_ascii=False))
         return {"ok": True, "live": False}
     if not STATE["busy"].acquire(timeout=0.1):
         raise r1ctl.StepError("robot is busy with another step")
@@ -315,8 +343,10 @@ def main():
     ap.add_argument("--live", action="store_true", help="allow driving the real robot (run this on PC2)")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--camera", default=None, help="OpenCV source: 0, a URL or a file")
+    ap.add_argument("--joga", default=None, help="r1-joga folder to serve at /joga/ (default: auto-find)")
     a = ap.parse_args()
     STATE["live"] = a.live
+    STATE["joga"] = find_joga(a.joga)
     if a.camera is not None:
         STATE["camera"] = Camera(a.camera)
     srv = ThreadingHTTPServer(("0.0.0.0", a.port), Handler)
@@ -324,6 +354,10 @@ def main():
     print("🤖 R1 Studio · %s mode" % ("LIVE ROBOT" if a.live else "SIMULATOR"))
     for ip in ips:
         print("   open  http://%s:%d" % (ip, a.port))
+    if STATE["joga"]:
+        print("   🧘 yoga app: http://<address above>:%d/joga/  (%s)" % (a.port, STATE["joga"]))
+    else:
+        print("   🧘 yoga app: not found (copy r1-joga to ~/r1-kit/r1-joga or pass --joga <dir>)")
     if a.live:
         print(r1ctl.SAFETY)
     try:

@@ -20,3 +20,5 @@ __pycache__/
 # secrets never live here (keys are in ~/.config/*)
 *.key
 .env
+# yoga app is its own repo (KrisVas333/r1-joga), cloned here for deploy.sh
+r1-joga/

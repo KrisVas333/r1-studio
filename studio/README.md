@@ -40,3 +40,6 @@ Kris Pro voice (ElevenLabs `eleven_v4_turbo`) + `robotize()` tin-can effect (pit
 
 ## Safety built in
 Dry-run unless 🤖 Robot + GO · Space/Stop = halt + hands open · arm speed ≤ 2 rad/s, smooth ramps, control handed back · AI only triggers whitelisted moves · no walking-off commands in files · no blades, soft objects only, kids behind 2 m.
+
+## 🧘 Yoga app (branch `joga`)
+`server.py` also serves the r1-joga app at `/joga/` (`--joga <dir>`, config `joga_dir`, or auto: `~/r1-kit/r1-joga`, `<kit>/r1-joga`). `deploy.sh` copies `r1-joga/` to PC2 and runs `r1ctl install` on its `export/` (moves `joga_l<level>_<pose>`). Dry-run steps are now logged. Guide: r1-joga `INSTALL.md`.

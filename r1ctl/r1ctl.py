@@ -15,7 +15,10 @@ recordings, event menus, vision skills, AI agents). Install new ones with
     r1ctl doctor
 """
 import argparse
-import fcntl
+try:
+    import fcntl
+except ImportError:  # Windows/Mac dry-run tooling only; the robot (Linux) always has it
+    fcntl = None
 import hashlib
 import json
 import os
@@ -678,6 +681,8 @@ def doctor(cfg):
 
 def lock():
     f = open(os.path.join(tempfile.gettempdir(), "r1ctl.lock"), "w")
+    if fcntl is None:
+        return f
     try:
         fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
