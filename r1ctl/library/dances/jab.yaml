@@ -3,7 +3,7 @@ kind: dance
 title: Jab
 category: Fight
 emoji: 👊
-seconds: 4.0
+seconds: 4.5
 steps:
 - parallel:
   - arm_traj:

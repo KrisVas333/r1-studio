@@ -1,5 +1,6 @@
 // r1_hand — move one BrainCo Revo2 hand to a pose (needs brainco_hand_server running).
 //   r1_hand <iface> <left|right> q0 q1 q2 q3 q4 q5 [duration_ms]
+//   r1_hand <iface> <left|right> state      print finger positions, nothing moves (exit 2 = no answer)
 // q in 0..1, order [Thumb, Thumb_aux, Index, Middle, Ring, Pinky]. ⚠️ 0=open/1=closed unverified on our unit.
 #include <unitree/robot/channel/channel_publisher.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
@@ -19,8 +20,25 @@ using States = unitree_go::msg::dds_::MotorStates_;
 
 int main(int argc, char** argv)
 {
+    if (argc == 4 && std::string(argv[3]) == "state") {
+        ChannelFactory::Instance()->Init(0, argv[1]);
+        std::atomic<bool> seen{false};
+        ChannelSubscriber<States> sub(std::string("rt/brainco/") + argv[2] + "/state");
+        sub.InitChannel([&](const void* m) {
+            if (seen.exchange(true)) return;
+            auto* s = (const States*)m;
+            for (size_t i = 0; i < 6 && i < s->states().size(); i++) std::cout << s->states()[i].q() << " ";
+            std::cout << std::endl;
+        });
+        for (int i = 0; i < 20 && !seen; i++) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (!seen) {
+            std::cerr << "no state on rt/brainco/" << argv[2] << "/state\n";
+            return 2;
+        }
+        return 0;
+    }
     if (argc < 9) {
-        std::cout << "r1_hand <iface> <left|right> q0..q5 [duration_ms]\n";
+        std::cout << "r1_hand <iface> <left|right> q0..q5 [duration_ms] | state\n";
         return 1;
     }
     ChannelFactory::Instance()->Init(0, argv[1]);

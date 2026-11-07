@@ -3,7 +3,7 @@ kind: dance
 title: One-two combo
 category: Fight
 emoji: 🥊
-seconds: 12.3
+seconds: 14.3
 steps:
 - parallel:
   - arm_traj:

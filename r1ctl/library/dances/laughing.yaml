@@ -3,7 +3,7 @@ kind: dance
 title: Laughing
 category: Emotions
 emoji: 😂
-seconds: 3.4
+seconds: 5.5
 steps:
 - parallel:
   - arm_traj:

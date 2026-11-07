@@ -3,7 +3,7 @@ kind: dance
 title: Lasso
 category: Viral
 emoji: 🤠
-seconds: 11.5
+seconds: 13.7
 steps:
 - parallel:
   - arm_traj:

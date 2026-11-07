@@ -3,7 +3,7 @@ kind: dance
 title: Sleepy
 category: Emotions
 emoji: 😴
-seconds: 5.6
+seconds: 6.4
 steps:
 - parallel:
   - arm_traj:

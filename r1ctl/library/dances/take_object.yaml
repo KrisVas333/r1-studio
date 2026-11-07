@@ -21,7 +21,3 @@ steps:
   - say:
       text: Please put it in my hand. Gently!
       voice: eleven
-- hand:
-    side: both
-    pose: open
-    ms: 500

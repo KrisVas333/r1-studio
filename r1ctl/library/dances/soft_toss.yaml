@@ -3,7 +3,7 @@ kind: dance
 title: Soft toss (plush/foam only)
 category: Objects
 emoji: 🧸
-seconds: 3.6
+seconds: 4.1
 steps:
 - parallel:
   - arm_traj:

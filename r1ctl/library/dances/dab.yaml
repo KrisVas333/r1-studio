@@ -3,7 +3,7 @@ kind: dance
 title: Dab
 category: Viral
 emoji: 🫳
-seconds: 3.9
+seconds: 4.9
 steps:
 - parallel:
   - arm_traj:

@@ -86,12 +86,12 @@ export class Robot3D {
     const m = new THREE.MeshStandardMaterial({ color: 0x2F6FEB, metalness: 0.2, roughness: 0.45 });
     const hand = new THREE.Group(); hand.position.set(0.135, 0, 0); hand.scale.setScalar(1.4); parent.add(hand);
     const palm = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.02, 0.065), m); palm.position.x = 0.035; hand.add(palm);
-    const sgn = s === "left" ? 1 : -1;
-    const spec = [[0.02, 0.04 * sgn, 0.035, true], [0.07, 0.024, 0.045], [0.07, 0.008, 0.05], [0.07, -0.008, 0.047], [0.07, -0.024, 0.04]];
-    spec.forEach(([x, y, len, thumb], i) => {
-      const f = new THREE.Group(); f.position.set(x, 0, i === 0 ? y : y * sgn);
+    // Both hands: forearm forward = thumb up (+z), palm facing the body's midline. ⚠️ assumed, not seen on our robot yet.
+    const spec = [[0.02, 0.04, 0.035, true], [0.07, 0.024, 0.045], [0.07, 0.008, 0.05], [0.07, -0.008, 0.047], [0.07, -0.024, 0.04]];
+    spec.forEach(([x, z, len, thumb], i) => {
+      const f = new THREE.Group(); f.position.set(x, 0, z);
       const seg = new THREE.Mesh(new THREE.BoxGeometry(len, 0.014, 0.013), m); seg.position.x = len / 2; f.add(seg);
-      if (thumb) f.rotation.y = -0.9 * sgn;
+      if (thumb) f.rotation.y = -0.9;
       hand.add(f); this.fingers[s].push(f);
     });
   }
@@ -109,7 +109,7 @@ export class Robot3D {
     for (const s of ["left", "right"]) {
       const q = this.handQ[s];
       // Revo2 order: thumb, thumb_aux, index, middle, ring, pinky
-      [q[0], q[2], q[3], q[4], q[5]].forEach((v, i) => { if (this.fingers[s][i]) this.fingers[s][i].rotation.z = -v * 1.5 * (i ? 1 : 0.7); });
+      [q[0], q[2], q[3], q[4], q[5]].forEach((v, i) => { if (this.fingers[s][i]) this.fingers[s][i].rotation.z = (s === "left" ? -1 : 1) * v * 1.5 * (i ? 1 : 0.7); });
     }
     if (this.joints.waist_roll) this.joints.waist_roll.pivot.quaternion.setFromAxisAngle(this.joints.waist_roll.axis, this.extra * 0.3);
   }

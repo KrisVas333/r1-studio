@@ -3,7 +3,7 @@ kind: dance
 title: Excited
 category: Emotions
 emoji: 🤩
-seconds: 12.1
+seconds: 14.3
 steps:
 - parallel:
   - arm_traj:

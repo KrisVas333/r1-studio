@@ -3,7 +3,7 @@ kind: dance
 title: V across the eyes
 category: Movies
 emoji: ✌️
-seconds: 6.3
+seconds: 6.6
 steps:
 - parallel:
   - arm_traj:

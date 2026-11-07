@@ -3,7 +3,7 @@ kind: dance
 title: Noodle arms
 category: Viral
 emoji: 🍜
-seconds: 8.1
+seconds: 9.6
 steps:
 - parallel:
   - arm_traj:

@@ -3,7 +3,7 @@ kind: dance
 title: Mind blown
 category: Reactions
 emoji: 🤯
-seconds: 6.1
+seconds: 6.7
 steps:
 - parallel:
   - arm_traj:

@@ -3,7 +3,7 @@ kind: dance
 title: Happy
 category: Emotions
 emoji: 😄
-seconds: 5.4
+seconds: 6.4
 steps:
 - parallel:
   - arm_traj:

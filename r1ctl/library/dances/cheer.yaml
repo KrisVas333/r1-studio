@@ -3,7 +3,7 @@ kind: dance
 title: Cheer
 category: Reactions
 emoji: 🙌
-seconds: 5.0
+seconds: 5.7
 steps:
 - parallel:
   - arm_traj:

@@ -3,7 +3,7 @@ kind: dance
 title: Confused
 category: Emotions
 emoji: 😕
-seconds: 3.3
+seconds: 3.4
 steps:
 - parallel:
   - arm_traj:

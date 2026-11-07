@@ -3,7 +3,7 @@ kind: dance
 title: Disco point
 category: Movies
 emoji: 🕺
-seconds: 10.3
+seconds: 11.9
 steps:
 - parallel:
   - arm_traj:

@@ -3,7 +3,7 @@ kind: dance
 title: Hit the woah
 category: Viral
 emoji: 💥
-seconds: 4.8
+seconds: 4.6
 steps:
 - parallel:
   - arm_traj:

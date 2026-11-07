@@ -3,7 +3,7 @@ kind: dance
 title: Aura farming
 category: Viral
 emoji: 🛶
-seconds: 10.6
+seconds: 11.9
 steps:
 - parallel:
   - arm_traj:

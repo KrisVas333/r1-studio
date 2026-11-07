@@ -12,7 +12,9 @@
 //   r1_arm <iface> serve                         hold the arm between commands read from stdin:
 //                                                 "pose q0..q12 vel" · "traj file speed" · "release"
 //                                                 (auto-release after 30 s idle or when stdin closes)
-// Ctrl-C at any time ramps control back to the robot.
+// Ctrl-C, kill, or a dropped ssh: the arms go back slowly to where they were, then control is handed back.
+// A second Ctrl-C skips the slow return. Unitree issue #182 says mode_pr may act as a switch, not a percent,
+// so the old ramp alone could end in a jump. Coming home first means there is nothing left to jump.
 #include "unitree/dds_wrapper/robots/g1/g1.h"
 #include "unitree/dds_wrapper/robots/r1/r1.h"
 #include <atomic>
@@ -23,12 +25,13 @@
 #include <mutex>
 
 using Vec = Eigen::VectorXf;
-static std::atomic<bool> g_stop{false};
-static void on_sigint(int) { g_stop = true; }
+static std::atomic<int> g_stop{0};
+static void on_stop(int) { g_stop++; }
 
 static const float KP[13] = {50, 50, 40, 40, 30, 50, 50, 40, 40, 30, 50, 15, 15};
 static const float KD[13] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 1, 1};
 static const float MAX_STEP = 0.02f;  // rad per 10 ms tick = 2 rad/s hard cap on any joint
+static const float HOME_VEL = 1.0f;   // rad/s, top speed of the walk home after a move or a STOP
 
 class Arm
 {
@@ -53,6 +56,7 @@ public:
     void enable(const std::vector<float>& kp_scale = {})
     {
         cmd_ = current();
+        home_ = cmd_;
         sdk_->weight(1.0);
         for (int i = 0; i < n_; i++) {
             auto& m = sdk_->msg_.motor_cmd().at(idx(i));
@@ -92,8 +96,21 @@ public:
 
     void hold() { step(cmd_); }
 
+    // Back to the pose control was taken in, at a walking pace, whatever the stop flag says.
+    void go_home()
+    {
+        Vec start = cmd_;
+        float dur = 1.5f * (home_ - start).cwiseAbs().maxCoeff() / HOME_VEL;  // smoothstep peaks at 1.5 x the average
+        for (float t = 0; t < dur && g_stop.load() < 2; t += 0.01f) {
+            float s = t / dur;
+            s = s * s * (3 - 2 * s);
+            step(start + (home_ - start) * s);
+        }
+    }
+
     void release(float dur = 1.5f)
     {
+        go_home();
         auto t0 = std::chrono::steady_clock::now();
         for (;;) {
             float e = std::chrono::duration<float>(std::chrono::steady_clock::now() - t0).count();
@@ -107,7 +124,7 @@ public:
     }
 
     int n_;
-    Vec cmd_;
+    Vec cmd_, home_;
 
 private:
     int idx(int i) const { return static_cast<int>(sdk_->JOINTS[i]); }
@@ -139,7 +156,8 @@ static int usage()
 int main(int argc, char** argv)
 {
     if (argc < 3) return usage();
-    std::signal(SIGINT, on_sigint);
+    for (int sig : {SIGINT, SIGTERM, SIGHUP}) std::signal(sig, on_stop);
+    std::signal(SIGPIPE, SIG_IGN);  // a closed ssh or pipe must not kill the walk home
     unitree::robot::ChannelFactory::Instance()->Init(0, argv[1]);
     std::string mode = argv[2];
     Arm arm;
@@ -175,6 +193,7 @@ int main(int argc, char** argv)
         if (rows.size() < 2) { std::cerr << "need >=2 rows of t,q0..q12\n"; return 1; }
         arm.enable();
         arm.movej(rows[0].second, 0.6f);  // slow approach to the first frame
+        std::cout << "go" << std::endl;   // r1ctl starts the voice and the fingers on this line
         auto t0 = std::chrono::steady_clock::now();
         size_t k = 0;
         while (!g_stop) {
@@ -223,7 +242,7 @@ int main(int argc, char** argv)
         }
         out.close();
         // Stiffen where the arm now is, then hand back.
-        g_stop = false;
+        g_stop = 0;
         for (float t = 0; t < 2.5f; t += 0.01f) {
             float s = t / 2.5f;
             std::vector<float> k(13);

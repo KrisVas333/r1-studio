@@ -3,7 +3,7 @@ kind: dance
 title: Karate chop
 category: Fight
 emoji: 🥋
-seconds: 4.2
+seconds: 4.9
 steps:
 - parallel:
   - arm_traj:

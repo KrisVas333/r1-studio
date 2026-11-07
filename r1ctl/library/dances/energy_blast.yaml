@@ -3,7 +3,7 @@ kind: dance
 title: Energy blast
 category: Fight
 emoji: 🌀
-seconds: 5.4
+seconds: 5.6
 steps:
 - parallel:
   - arm_traj:

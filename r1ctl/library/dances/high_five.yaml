@@ -3,7 +3,7 @@ kind: dance
 title: High five?
 category: Reactions
 emoji: 🖐️
-seconds: 5.6
+seconds: 6.1
 steps:
 - parallel:
   - arm_traj:

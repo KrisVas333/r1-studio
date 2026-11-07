@@ -3,7 +3,7 @@ kind: dance
 title: Macarena
 category: Viral
 emoji: 💃
-seconds: 16.8
+seconds: 17.2
 steps:
 - parallel:
   - arm_traj:

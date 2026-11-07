@@ -3,7 +3,7 @@ kind: dance
 title: Y-M-C-A
 category: Viral
 emoji: 🔤
-seconds: 10.5
+seconds: 12.1
 steps:
 - parallel:
   - arm_traj:

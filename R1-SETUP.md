@@ -24,7 +24,7 @@ The Unitree SDK runs on **Linux only**, so the Mac never controls the robot dire
 
 ## Step by step
 
-**1. Cable.** USB-C Ethernet adapter → cable → the R1's developer Ethernet port. Power the robot on, stand it up with the remote (hold rear handle, R2+A).
+**1. Cable.** USB-C Ethernet adapter → cable → the **upper-right RJ45 on the panel below the neck** (verified 2026-11-07: .161 answers there; the lower-left RJ45 holds the white cable to the rear module, and the rear module's own port is silent when it is off). Power the robot on, stand it up with the remote (hold rear handle, R2+A).
 
 **2. Network.**
 ```bash

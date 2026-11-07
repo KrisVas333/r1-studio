@@ -44,6 +44,8 @@ STEP_TYPES = ("fsm", "loco", "arm_preset", "arm_pose", "arm_traj", "hand", "grab
 # Loco commands a dance may use. damp / zero_torque make the robot go limp, so they are
 # only reachable from the event-menu stop key or by hand, never from a file.
 LOCO_OK = ("start", "stand_up", "sit", "squat", "stop_move", "move", "set_speed_mode")
+# Unitree's own moves a file may ask for. Same reason: 0 and 1 go limp, the rest change the balance mode.
+FSM_OK = (601, 602, 603, 604, 607, 608)
 SAFETY = "⚠️  LIVE: gantry for first runs · remote in hand (e-stop) · 2 m clear · no fingers in the hands · no blades, ever"
 
 
@@ -140,6 +142,8 @@ def validate_steps(steps, where="dance"):
             cmd = arg.get("cmd") if isinstance(arg, dict) else arg
             if cmd not in LOCO_OK:
                 raise StepError("%s: loco '%s' not allowed in files (allowed: %s)" % (at, cmd, ", ".join(LOCO_OK)))
+        if kind == "fsm" and arg not in FSM_OK:
+            raise StepError("%s: fsm %s not allowed in files (allowed: %s)" % (at, arg, ", ".join(map(str, FSM_OK))))
         if kind == "arm_pose" and (not isinstance(arg, dict) or len(arg.get("q", [])) != 13):
             raise StepError("%s: arm_pose needs q with 13 numbers" % at)
         if kind == "hand":
@@ -280,20 +284,82 @@ class Robot:
         self.stopped = threading.Event()
         self.history = []  # every command, for tests and the dry-run printout
         self.last_ai = None
+        self.children = set()  # helper programs running now, so STOP can interrupt them
+        self.guard = threading.Lock()
+        self.speed = 1.0  # 0.25..1 = slow test on the real robot
+        self.warnings = []  # soft problems (no hands, no voice): the move itself keeps playing
+        self.arm_ready = None  # set when the arm reaches the first frame of a move
 
-    def run(self, argv, timeout=120):
+    def warn(self, text):
+        if text not in self.warnings:
+            self.warnings.append(text)
+        self.log("⚠️ " + text)
+
+    def run(self, argv, timeout=120, on_line=None):
         self.history.append(argv)
         if self.stopped.is_set():
             return
         if not self.live:
             self.log("  · " + " ".join(str(a) for a in argv))
             return
-        r = subprocess.run([str(a) for a in argv], timeout=timeout)
-        if r.returncode != 0:
-            raise StepError("command failed (%d): %s" % (r.returncode, " ".join(map(str, argv))))
+        p = subprocess.Popen([str(a) for a in argv], stdout=subprocess.PIPE if on_line else None, universal_newlines=True)
+        if on_line:
+            threading.Thread(target=lambda: [on_line(line.strip()) for line in p.stdout], daemon=True).start()
+        with self.guard:
+            self.children.add(p)
+        if self.stopped.is_set():  # STOP landed between the check above and Popen
+            p.send_signal(signal.SIGINT)
+        try:
+            try:
+                code = p.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait()
+                raise StepError("timed out: %s" % " ".join(map(str, argv)))
+        finally:
+            with self.guard:
+                self.children.discard(p)
+        if code != 0 and not self.stopped.is_set():
+            raise StepError("command failed (%d): %s" % (code, " ".join(map(str, argv))))
+
+    def abort(self):
+        """STOP: no new steps, and Ctrl-C whatever runs now. r1_arm walks home and hands control back by itself.
+        The flag stays set for good: this Robot is finished. Send stop commands from a fresh Robot.
+        Only the first call signals: a second signal makes r1_arm skip the walk home, and people tap STOP twice."""
+        with self.guard:
+            first = not self.stopped.is_set()
+            self.stopped.set()
+            kids = list(self.children)
+        if not first:
+            return
+        for p in kids:
+            try:
+                p.send_signal(signal.SIGINT)
+            except OSError:
+                pass
+        if kids:
+            threading.Thread(target=self._finish_off, args=(kids,), daemon=True).start()
+
+    @staticmethod
+    def _finish_off(kids, grace=8.0):
+        """r1_arm needs up to 6 s to walk home and hand control back. Still running after that: it hung."""
+        time.sleep(grace)
+        for p in kids:
+            if p.poll() is None:
+                p.kill()
 
     def b(self, name):
         return os.path.join(self.cfg["bin"], name)
+
+    def arm_move(self, path, speed):
+        """Play an arm file. Whoever waits on arm_ready starts when the arm is on the first frame, not before."""
+        ready, self.arm_ready = self.arm_ready, None
+        try:
+            self.run([self.b("r1_arm"), self.cfg["iface"], "traj", path, speed], timeout=900,
+                     on_line=(lambda line: ready.set() if ready and line == "go" else None))
+        finally:
+            if ready:
+                ready.set()
 
     def sdk(self, name):
         return os.path.join(self.cfg["sdk_bin"], name)
@@ -305,8 +371,13 @@ class Robot:
     def hand(self, side, q, ms=600):
         sides = ["left", "right"] if side == "both" else [side]
         q = [min(1.0, max(0.0, float(v))) for v in q]
-        threads = [threading.Thread(target=self.run, args=([self.b("r1_hand"), self.cfg["iface"], s] + q + [int(ms)],))
-                   for s in sides]
+
+        def one(s):
+            try:
+                self.run([self.b("r1_hand"), self.cfg["iface"], s] + q + [int(ms)])
+            except StepError:  # arms keep going without hands, and the operator gets told
+                self.warn("%s hand did not answer. Is brainco_hand_server running?" % s)
+        threads = [threading.Thread(target=one, args=(s,)) for s in sides]
         for t in threads:
             t.start()
         for t in threads:
@@ -322,13 +393,24 @@ class Robot:
         except Exception as e:  # stop must never crash
             self.log("stop error: %s" % e)
 
-    def say(self, text, voice="robot"):
+    def say(self, text, voice="robot", fx=None):
         if voice == "eleven":
-            wav = eleven_wav(self.cfg, text, dry=not self.live)
+            try:
+                wav = eleven_wav(self.cfg, text, dry=not self.live, fx=fx)
+            except OSError:  # no internet on the robot and the line is not ready-made
+                wav = None
             if wav:
-                return self.run([self.b("r1_say"), self.cfg["iface"], "wav", wav])
-            self.log("  (no ElevenLabs voice set: falling back to robot English TTS)")
-        self.run([self.b("r1_say"), self.cfg["iface"], "tts", 1, text])
+                try:
+                    return self.run([self.b("r1_say"), self.cfg["iface"], "wav", wav])
+                except StepError:
+                    return self.warn("the speaker did not answer")
+            if not text.isascii():  # the built-in voice is English only: Lithuanian would be gibberish
+                return self.warn("no voice for this line: it is not ready-made and the robot has no internet or key")
+            self.log("  (no ElevenLabs voice: using the robot's English voice)")
+        try:
+            self.run([self.b("r1_say"), self.cfg["iface"], "tts", 1, text])
+        except StepError:
+            self.warn("the speaker did not answer")
 
 
 def robotize(pcm, rate=16000, fx="robot"):
@@ -359,15 +441,19 @@ def robotize(pcm, rate=16000, fx="robot"):
     return out.tobytes()
 
 
-def eleven_wav(cfg, text, dry=False):
-    key = read_secret("ELEVENLABS_API_KEY", "~/.config/elevenlabs/key")
-    if not key or not cfg.get("eleven_voice"):
+def eleven_wav(cfg, text, dry=False, fx=None):
+    if not cfg.get("eleven_voice"):
         return None
     os.makedirs(CACHE, exist_ok=True)
-    fx = cfg.get("voice_fx", "robot")
+    fx = fx or cfg.get("voice_fx", "robot")
     h = hashlib.sha1((cfg["eleven_voice"] + cfg["eleven_model"] + fx + text).encode()).hexdigest()[:16]
     path = os.path.join(CACHE, h + ".wav")
-    if os.path.exists(path) or dry:
+    if os.path.exists(path):  # ready-made lines work with no key and no internet
+        return path
+    key = read_secret("ELEVENLABS_API_KEY", "~/.config/elevenlabs/key")
+    if not key:
+        return None
+    if dry:
         return path
     req = urllib.request.Request(
         "https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=pcm_16000" % cfg["eleven_voice"],
@@ -399,7 +485,7 @@ def play_steps(robot, steps, depth=0):
             if isinstance(arg, dict):
                 robot.loco(arg["cmd"], arg.get("value"))
                 if arg["cmd"] == "move":
-                    time.sleep(float(arg.get("seconds", 1)) if robot.live else 0)
+                    robot.stopped.wait(float(arg.get("seconds", 1)) if robot.live else 0)
                     robot.loco("stop_move")
             else:
                 robot.loco(arg)
@@ -409,7 +495,7 @@ def play_steps(robot, steps, depth=0):
             robot.run([robot.b("r1_arm"), robot.cfg["iface"], "pose"] + list(arg["q"]) + [arg.get("max_vel", 0.8)])
         elif kind == "arm_traj":
             a = arg if isinstance(arg, dict) else {"file": arg}
-            robot.run([robot.b("r1_arm"), robot.cfg["iface"], "traj", find_item("arm", a["file"]), a.get("speed", 1.0)])
+            robot.arm_move(find_item("arm", a["file"]), a.get("speed", 1.0) * robot.speed)
         elif kind in ("hand", "grab", "release"):
             a = arg if isinstance(arg, dict) else {"side": arg}
             side = a.get("side", "right")
@@ -422,13 +508,13 @@ def play_steps(robot, steps, depth=0):
                 if q is None:
                     raise StepError("unknown hand pose '%s' (have: %s)" % (a["pose"], ", ".join(sorted(poses))))
                 ms = a.get("ms", 600)
-            robot.hand(side, q, ms)
+            robot.hand(side, q, ms / robot.speed)
         elif kind == "wait":
             if robot.live:
-                time.sleep(float(arg))
+                robot.stopped.wait(float(arg) / robot.speed)
         elif kind == "say":
             a = arg if isinstance(arg, dict) else {"text": arg}
-            robot.say(a["text"], a.get("voice", "robot"))
+            robot.say(a["text"], a.get("voice", "robot"), a.get("fx"))
         elif kind == "audio":
             robot.run([robot.b("r1_say"), robot.cfg["iface"], "wav", arg])
         elif kind == "led":
@@ -437,12 +523,24 @@ def play_steps(robot, steps, depth=0):
             play_steps(robot, [random.choice(arg)], depth + 1)
         elif kind == "parallel":
             errs = []
+            # The arm walks to its first frame before the move starts, up to 5 s. Voice and fingers wait for it,
+            # or a rock-paper-scissors reveal lands before the arm does.
+            lead = next((s for s in arg if "arm_traj" in s), None)
+            ready = threading.Event()
+            robot.arm_ready = ready if lead else None
+            if not lead:
+                ready.set()
 
             def one(s):
                 try:
+                    if s is not lead:
+                        ready.wait(8)
                     play_steps(robot, [s], depth + 1)
                 except Exception as e:
                     errs.append(e)
+                finally:
+                    if s is lead:
+                        ready.set()
             ts = [threading.Thread(target=one, args=(s,)) for s in arg]
             for t in ts:
                 t.start()

@@ -3,7 +3,7 @@ kind: dance
 title: Crane pose
 category: Fight
 emoji: 🦢
-seconds: 5.2
+seconds: 5.8
 steps:
 - parallel:
   - arm_traj:
