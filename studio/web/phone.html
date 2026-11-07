@@ -445,7 +445,7 @@ async function speak(text, voice) {
   } catch (e) { toast("⚠️ " + e.message, 6000); }
 }
 function openArm() {
-  if (!STATUS.live_allowed) return toast(t("ph.noarmhere", { w: t(DEMO ? "ph.demo.l" : "ph.emu.l") }), 4000);
+  if (!STATUS.live_allowed && STATUS.mode !== "mac") return toast(t("ph.noarmhere", { w: t(DEMO ? "ph.demo.l" : "ph.emu.l") }), 4000);
   $("go").value = ""; $("armbox").hidden = false; $("go").focus();
 }
 $("armOk").onclick = async () => {
@@ -482,7 +482,8 @@ function askPin() {
 
 // ---------------------------------------------------------------- health dots
 function paint() {
-  const b = $("mode"); b.textContent = armed ? t("ph.mode.live") : STATUS.live_allowed ? t("ph.mode.arm") : DEMO ? t("ph.mode.demo") : t("ph.mode.emu");
+  const mac = STATUS.mode === "mac";  // server.py --bridge: Mac → cable → robot, voice/LED/volume only
+  const b = $("mode"); b.textContent = mac ? t(armed ? "ph.mode.maclive" : "ph.mode.mac") : armed ? t("ph.mode.live") : STATUS.live_allowed ? t("ph.mode.arm") : DEMO ? t("ph.mode.demo") : t("ph.mode.emu");
   b.classList.toggle("live", armed);
   const items = HEALTH ? HEALTH.items : [];
   $("dots").replaceChildren(...DOTS.map(([id, e]) => {

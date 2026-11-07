@@ -37,7 +37,43 @@ function bubble(text) { const b = $("bubble"); if (!text) return b.classList.add
 function banner(text) { const b = $("banner"); if (!text) return b.classList.add("hidden"); b.textContent = text; b.classList.remove("hidden"); }
 
 let audio = null;
+// ---------------------------------------------------------------- Mac-direct robot (server.py --bridge)
+let robotVoice = false;
+try { robotVoice = localStorage.getItem("r1voice") === "robot"; } catch (e) { /* private mode */ }
+async function sayOnRobot(text) {
+  // Unitree's own voice on the robot speaker, through mac_bridge.py. The bridge refuses until GO.
+  try { return await api("/api/say", { text, voice: "robot" }); } catch (e) {
+    if (!/^Not armed|^Commands are off/.test(e.message)) throw e;
+    if (/^Commands are off/.test(e.message)) throw new Error(t("rb.cmdoff"));
+    const ok = await modal(t("rb.arm.t"), t("rb.arm.b"), { ok: t("start"), input: "" });
+    if ((ok || "").trim().toUpperCase() !== "GO") throw new Error(t("rb.notarmed"));
+    await api("/api/bridge/arm", { go: "GO" });
+    return api("/api/say", { text, voice: "robot" });
+  }
+}
+async function robotChip() {
+  const c = $("chipRobot");
+  if (!STATUS || STATUS.mode !== "mac") { c.hidden = true; return; }
+  let s = { bridge: false };
+  try { s = await api("/api/bridge/state"); } catch (e) { /* server busy */ }
+  c.hidden = false;
+  const state = !s.bridge ? "nobridge" : s.connected ? "on" : "off";
+  c.textContent = t("rb.chip." + state) + " · " + t(robotVoice ? "rb.voice.robot" : "rb.voice.mac");
+  c.className = "robotchip " + (state === "on" ? "on" : "off");
+  c.title = t("rb.chip.h") + ". " + t(robotVoice ? "rb.voice.robot.t" : "rb.voice.mac.t") + ". " + t("rb.t") + (s.volume != null ? " · " + t("rb.vol", { n: s.volume }) : "");
+}
+$("chipRobot").onclick = () => {
+  robotVoice = !robotVoice;
+  try { localStorage.setItem("r1voice", robotVoice ? "robot" : "mac"); } catch (e) { /* private mode */ }
+  robotChip();
+};
+
 async function speak(text, lang, signal, voice = "eleven") {
+  if (STATUS && STATUS.mode === "mac" && robotVoice) {
+    bubble(text);
+    try { await sayOnRobot(text); logLine("🤖 " + text); } catch (e) { logLine("❌ " + srv(e.message)); }
+    await sleep(Math.max(1000, text.length * 70), signal); bubble(""); return;
+  }
   // Simulator voice: Kris robot voice (ElevenLabs + robot effect, via server) or the browser's. On the robot the R1 speaks itself.
   if ($("chatSpeak").checked && STATUS.eleven && voice !== "robot") {
     try {
@@ -630,6 +666,7 @@ setInterval(() => { if (vision.running) $("seen").textContent = vision.current ?
   buildSliders();
   buildDeck();
   status(t("st.ready"));
+  robotChip(); setInterval(() => { if (!document.hidden) robotChip(); }, 3000);
   let since = Date.now() / 1000;
   setInterval(async () => { if (!live) return; try { const l = await api("/api/log?since=" + since); l.forEach((e) => { logLine(e.line); since = e.t; }); } catch (e) { /* offline */ } }, 1500);
 })();

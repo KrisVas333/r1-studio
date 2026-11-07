@@ -142,3 +142,9 @@ kbd.on { background: var(--ink); color: #fff; }
 .langsw { display: flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
 .langsw button { border: 0; border-radius: 0; padding: 6px 10px; font: 700 13px var(--mono); background: var(--panel); }
 .langsw button.on { background: var(--ink); color: #fff; }
+/* Mac-direct robot chip (server.py --bridge) */
+.robotchip { font: 600 12px var(--mono); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); flex: 0 0 auto; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.robotchip.on { border-color: #1a7f37; color: #1a7f37; }
+.robotchip.off { border-color: var(--red); color: var(--red); }
+#langBox, .top .langsw { flex: 0 0 auto; }
+.top .project { min-width: 60px; flex: 0 1 auto; }

@@ -38,7 +38,57 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "r1ctl"))
 import r1ctl  # noqa: E402
 
 STATE = {"live": False, "robot": None, "log": [], "busy": threading.Lock(), "camera": None, "joga": None,
-         "pin": None, "health": (0, None), "https_port": None, "armed": 0}  # armed = time of the last move, 0 = not armed
+         "pin": None, "health": (0, None), "https_port": None, "armed": 0,  # armed = time of the last move, 0 = not armed
+         "bridge": None, "bridge_token": None}  # Mac-direct bridge URL (mac_bridge.py) and its armed token
+
+
+def mode():
+    """Which robot path this server uses: pc2 (--live on the backpack), mac (--bridge, cable to the Mac), sim."""
+    return "pc2" if STATE["live"] else "mac" if STATE["bridge"] else "sim"
+
+
+def bridge_call(path, body=None, timeout=4.0):
+    """Talk to mac_bridge.py on this Mac. Returns (http code, json). Never raises for a dead bridge."""
+    import urllib.error
+    import urllib.request
+    headers = {"Content-Type": "application/json"}
+    if STATE["pin"]:
+        headers["X-R1-Pin"] = STATE["pin"]
+    if STATE["bridge_token"]:
+        headers["X-R1-Arm"] = STATE["bridge_token"]
+    data = None if body is None else json.dumps(body).encode()
+    req = urllib.request.Request(STATE["bridge"].rstrip("/") + path, data=data, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        try:
+            return e.code, json.loads(e.read() or b"{}")
+        except ValueError:
+            return e.code, {"error": "bridge error %s" % e.code}
+    except (OSError, ValueError) as e:
+        return 0, {"error": "bridge not running (%s)" % getattr(e, "reason", e), "connected": False}
+
+
+def bridge_act(kind, body):
+    """Send one command through the bridge. The bridge itself refuses unless --allow-commands and armed."""
+    code, out = bridge_call("/" + kind, body)
+    if code != 200:
+        raise r1ctl.StepError(out.get("error") or "the bridge did not answer")
+    log("🤖 Mac → robot: %s" % kind)
+    return out
+
+
+def bridge_arm(go):
+    code, out = bridge_call("/arm", {"go": go})
+    STATE["bridge_token"] = out.get("token") if code == 200 else None
+    return code == 200, out.get("error")
+
+
+def bridge_disarm():
+    STATE["bridge_token"] = None
+    if STATE["bridge"]:
+        threading.Thread(target=bridge_call, args=("/stop", {}, 1.5), daemon=True).start()
 # deploy.sh mirrors the code folders with --delete, so anything made on the robot lives outside them
 DATA = os.path.expanduser(os.environ.get("R1_DATA", "~/r1-data"))
 SOUNDS = os.path.join(DATA, "sounds")     # uploaded music + effects
@@ -305,6 +355,9 @@ def say_now(data):
     text = str(data.get("text", "")).strip()[:400]
     if not text:
         raise r1ctl.StepError("nothing to say")
+    if mode() == "mac" and data.get("voice") == "robot":  # Unitree's own voice, cable to the Mac
+        bridge_act("say", {"text": text})
+        return {"ok": True, "live": True, "via": "bridge"}
     if not (data.get("live") and STATE["live"]):
         return {"ok": True, "live": False}
     cfg = r1ctl.config()
@@ -325,6 +378,7 @@ def say_now(data):
 def stop_everything():
     """STOP button. Disarms, ends the running move for good, then sends stop commands from a fresh Robot."""
     STATE["armed"] = 0
+    bridge_disarm()
     r = STATE["robot"]
     if r:
         r.abort()
@@ -392,7 +446,12 @@ class Handler(SimpleHTTPRequestHandler):
                 "ai_key": bool(r1ctl.read_secret("ANTHROPIC_API_KEY", "~/.config/anthropic/api_key")),
                 "eleven": bool(cfg.get("eleven_voice")) and bool(r1ctl.read_secret("ELEVENLABS_API_KEY", "~/.config/elevenlabs/key")), "host": socket.gethostname(),
                 "pin": bool(STATE["pin"]), "https_port": STATE["https_port"], "verified": verified_now(), "playing": PLAYER.playing(),
-                "armed": is_armed()})
+                "armed": is_armed(), "mode": mode(), "bridge": bool(STATE["bridge"])})
+        if self.path == "/api/bridge/state":
+            if not STATE["bridge"]:
+                return self.send_json({"bridge": False, "connected": False})
+            code, out = bridge_call("/state", timeout=2.0)
+            return self.send_json(dict(out, bridge=code == 200))
         if self.path == "/api/health":
             return self.send_json(health())
         if self.path == "/api/sounds":
@@ -468,7 +527,27 @@ class Handler(SimpleHTTPRequestHandler):
                     raise r1ctl.StepError("type GO to arm")
                 STATE["armed"] = time.time()
                 log("🟥 armed")
-                return self.send_json({"ok": True, "armed": True})
+                out = {"ok": True, "armed": True}
+                if mode() == "mac":  # the same GO arms the bridge (it refuses unless started with --allow-commands)
+                    out["bridge_armed"], err = bridge_arm("GO")
+                    if err:
+                        out["bridge_error"] = err
+                return self.send_json(out)
+            if self.path.startswith("/api/bridge/"):
+                kind = self.path[len("/api/bridge/"):]
+                if mode() != "mac":
+                    raise r1ctl.StepError("bridge mode is off: start the server with --bridge")
+                if kind == "arm":
+                    ok, err = bridge_arm(data.get("go"))
+                    if not ok:
+                        raise r1ctl.StepError(err or "the bridge did not arm")
+                    return self.send_json({"ok": True, "armed": True})
+                if kind in ("stop", "disarm"):
+                    bridge_disarm()
+                    return self.send_json({"ok": True})
+                if kind in ("say", "led", "volume"):
+                    return self.send_json(bridge_act(kind, data))
+                return self.send_json({"error": "unknown endpoint"}, 404)
             if self.path == "/api/say":
                 return self.send_json(say_now(data))
             if self.path == "/api/sound_play":
@@ -488,6 +567,9 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({"ok": True})
             if self.path == "/api/volume":
                 level = max(0, min(100, int(data.get("level", 50))))
+                if mode() == "mac":
+                    bridge_act("volume", {"n": level})
+                    return self.send_json({"ok": True, "level": level, "live": True, "via": "bridge"})
                 if STATE["live"]:
                     cfg = r1ctl.config()
                     if not probe([os.path.join(cfg["bin"], "r1_say"), cfg["iface"], "volume", level])[0]:
@@ -513,6 +595,7 @@ class Handler(SimpleHTTPRequestHandler):
                     stop_everything()
                     return self.send_json({"ok": True, "stopped": True})
                 STATE["armed"] = 0
+                bridge_disarm()
                 if STATE["live"]:
                     ARM.release()
                 return self.send_json({"ok": True})
@@ -832,9 +915,16 @@ def main():
     ap.add_argument("--pin", default=None, help="every action needs this PIN; STOP never does")
     ap.add_argument("--https-port", type=int, default=8443, help="same app over https, needed for the mic (0 = off)")
     ap.add_argument("--bind", default=None, help="address to listen on (default: this computer only in emulator mode)")
+    ap.add_argument("--bridge", nargs="?", const="http://127.0.0.1:8090", default=None,
+                    help="Mac-direct mode: speak and read state through mac_bridge.py (default http://127.0.0.1:8090)")
     a = ap.parse_args()
     STATE["live"] = a.live
     STATE["pin"] = a.pin
+    if a.bridge and a.live:
+        sys.exit("--bridge is for the Mac (no backpack); --live is for PC2. Pick one.")
+    STATE["bridge"] = a.bridge
+    if a.bind not in (None, "127.0.0.1", "localhost") and not a.pin and not a.live:
+        sys.exit("--bind %s lets phones on this Wi-Fi in: add --pin 4821 (any number you choose)." % a.bind)
     STATE["joga"] = find_joga(a.joga)
     bind = a.bind or ("0.0.0.0" if a.live else "127.0.0.1")
     if a.camera is not None:
@@ -850,7 +940,8 @@ def main():
         sys.exit("R1 Remote is already running here, so just reload the page.\n"
                  "To start it fresh: pkill -f server.py, then run this line again.")
     ips = sorted({i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)} | {"127.0.0.1"})
-    print("🤖 R1 Studio · %s mode" % ("LIVE ROBOT" if a.live else "SIMULATOR"))
+    print("🤖 R1 Studio · %s mode" % {"pc2": "LIVE ROBOT (PC2)", "mac": "MAC-DIRECT (bridge %s)" % a.bridge,
+                                      "sim": "SIMULATOR"}[mode()])
     for ip in ips:
         print("   📱 R1 Remote: http://%s:%d/phone.html" % (ip, a.port))
     if a.https_port and start_https(bind, a.https_port):

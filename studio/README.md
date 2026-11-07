@@ -34,6 +34,11 @@ python3 ~/r1-kit/studio/server.py --live [--camera 0]    # open http://192.168.1
 ```
 Then click **🤖 Robot**, type GO. Space = STOP everywhere.
 
+**One command per mode:** `~/r1/start-robot.sh mac | pc2 [PIN] | event PIN | sim`.
+
+### Mac-direct (no backpack / PC2)
+`mac_bridge.py` (run with `~/r1/.venv-sdk/bin/python`, setup: `~/r1/build-cyclonedds.sh`) talks DDS to the robot over the cable (`--iface en16`) and serves `GET /state` plus `POST /say {text}`, `/led {r,g,b}`, `/volume {n}` on 127.0.0.1:8090. Read-only unless started with `--allow-commands`; then a command also needs the token from `POST /arm {"go":"GO"}` in header `X-R1-Arm` (10 idle minutes). `/stop` drops it, no PIN needed. `--bind 0.0.0.0` refuses to start without `--pin`. `server.py --bridge` routes robot-voice lines, the volume slider and `/api/bridge/*` through it, arms it with the same GO, disarms it on STOP/End, and shows a 🟢/🔴 chip in the header (🔊 = robot speaker, 💻 = this computer; click to switch). Unitree's TTS is English/Chinese only. No arm or hand commands here on purpose (FSM 816 lockout). Tests: `tests/test_mac_bridge.py` (fake link, nothing reaches DDS).
+
 ## Tabs
 | Tab | What |
 |---|---|

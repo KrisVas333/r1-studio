@@ -78,6 +78,7 @@ Telefone ar kompiuteryje atidaryk **http://192.168.123.164:8080/phone.html**.
 | LT / EN sąsaja | ✅ patikrinta naršyklėje 2026-11-07 |
 | Serverio saugos taisyklės (GO, STOP, greitis, patikra) | ✅ 54 automatiniai testai su netikru robotu |
 | r1ctl valdiklis | ✅ 30 iš 31 testo; 1 laiko testas kartais nepraeina |
+| Mac tiesioginis tiltas (balsas, LED, būsena) | ✅ 20 testų su netikru robotu · ✅ roboto balsas iš Mac veikė (bandomasis skriptas, 2026-11-07) · ⚠️ pats tiltas su tikru robotu dar nepaleistas |
 | Kamera, daiktų ir rankų atpažinimas | ✅ veikia su kompiuterio kamera (tikrinta 2026-10-23) |
 | Bet kuris judesys tikram robotui | ⚠️ dar nepaleistas |
 | BrainCo Revo2 rankos | ⚠️ dar nepatikrintos su šiuo kodu |
@@ -92,6 +93,43 @@ Telefone ar kompiuteryje atidaryk **http://192.168.123.164:8080/phone.html**.
 1. Įjungti EDU modulį (Unitree palaikymas).
 2. Pirmas bandymas ant stovo: vienas rankų judesys pusiniu greičiu ir STOP.
 3. Renginių režimas per kišeninį Wi‑Fi maršrutizatorių, su `--pin`.
+
+### 6. Valdymas tiesiai iš Mac (be EDU kompiuterio)
+
+Kai galinis EDU kompiuteris (PC2) išjungtas, Mac gali kalbėtis su robotu pats, per laidą.
+
+**Trys būdai, po vieną komandą:**
+
+| Būdas | Komanda | Kas veikia |
+|---|---|---|
+| A. Mac + laidas | `~/r1/start-robot.sh mac` | būsena, balsas, LED, garsumas |
+| B. EDU kompiuteris (PC2) | `~/r1/start-robot.sh pc2 4821` | viskas: judesiai, rankos, plaštakos |
+| C. Renginys (telefonas per Wi‑Fi) | `~/r1/start-robot.sh event 4821` | kaip A, bet iš telefono |
+
+Studijos viršuje matosi, kuris būdas įjungtas: A ir C rodo ženkliuką **🟢 Robotas: prisijungęs** arba **🔴 Robotas: neprisijungęs**. R1 Remote telefone rodo **MAC → ROBOTAS**.
+
+**1. Laidas.** Ethernet laidas į **viršutinį dešinįjį RJ45 lizdą po kaklu**, kitas galas į Mac (USB‑C Ethernet adapteris).
+
+**2. Adresas.** Mac gauna **192.168.123.222**: `~/r1/connect.sh en16` (adapterio vardą parodo `~/r1/connect.sh`). Robotas yra **192.168.123.161**.
+
+**3. Vieną kartą paruošti:** `~/r1/build-cyclonedds.sh` (CycloneDDS 0.10 ir Unitree SDK į `~/r1/.venv-sdk`).
+
+**4. Paleisti.** `~/r1/start-robot.sh mac`. Tiltas `studio/mac_bridge.py` tik skaito. Kad robotas kalbėtų: `~/r1/start-robot.sh mac --allow-commands`, tada programoje įrašyk **GO**. STOP visada išjungia.
+
+**5. Patikrinti:** `curl -s http://127.0.0.1:8090/state` parodo `"connected": true`, režimą, padėtį, greitį ir roboto garsumą.
+
+**Kas veikia:**
+- ✅ roboto būsena (judesio režimas, padėtis, greitis, pultelio mygtukai)
+- ✅ roboto balsas (Unitree TTS), LED spalva, garsumas
+- ✅ Kris balsas (ElevenLabs) skamba kompiuteryje. Ženkliukas: 🔊 = robotas, 💻 = kompiuteris.
+
+**Kas neveikia (dar):**
+- ❌ rankos ir plaštakos (veikia tik per PC2)
+- ❌ kameros įgūdžiai roboto kompiuteryje
+- ❌ rankų judesiai iš Mac: pirmas rankų komandos siuntimas einant užrakina robotą (FSM 816) iki perkrovimo
+- ⚠️ Unitree balsas kalba angliškai ir kiniškai. Lietuviškas tekstas skamba netaisyklingai.
+
+**Renginiams be laido (planas, dar nepirkta):** kišeninis kelioninis Wi‑Fi maršrutizatorius su LAN lizdu (pvz. GL.iNet). Laidas iš roboto į maršrutizatorių, maršrutizatorius dalina tą patį **192.168.123.x** tinklą per Wi‑Fi. Mac ir telefonai jungiasi prie jo Wi‑Fi. Iki tol: `start-robot.sh event 4821`, telefonas tame pačiame Wi‑Fi kaip Mac, adresas **http://&lt;Mac adresas&gt;:8080/phone.html**, PIN 4821.
 
 ---
 
@@ -128,7 +166,7 @@ Mac, simulator only: the five commands in the Lithuanian section, then open **ht
 On the robot (after `~/r1/deploy.sh`, on PC2, see [R1-SETUP.md](../R1-SETUP.md)): `ssh unitree@192.168.123.164`, then `python3 ~/r1-kit/studio/server.py --live --pin 4821`, and open **http://192.168.123.164:8080/phone.html**.
 
 ### 4. Honest status
-Same table as above: ✅ simulator, LT/EN UI, 54 server safety tests with a fake robot, 30 of 31 r1ctl tests (one timing test is flaky), camera recognition with a computer webcam (tested 2026-10-23). ⚠️ No move has run on the real robot yet. Revo2 hands, factory move ids and the head camera are unverified. The Lithuanian AI answer is wired but untested without a key. Spoken lines inside moves are still English.
+Same table as above: ✅ simulator, LT/EN UI, 54 server safety tests with a fake robot, 20 Mac-bridge tests with a fake robot (robot voice from the Mac worked with a test script on 2026-11-07; the bridge itself has not yet run against the robot), 30 of 31 r1ctl tests (one timing test is flaky), camera recognition with a computer webcam (tested 2026-10-23). ⚠️ No move has run on the real robot yet. Revo2 hands, factory move ids and the head camera are unverified. The Lithuanian AI answer is wired but untested without a key. Spoken lines inside moves are still English.
 
 **Real-robot test, 2026-11-07.** The Mac reached the robot's motion computer **192.168.123.161** over Ethernet (upper-right RJ45 below the neck). The rear EDU computing module (**192.168.123.164**) did not power on: no LED, no ping, and the robot itself sends ARP "who-has .164". So the hands and everything that runs on the module could not be tested yet. Reported to Unitree support.
 
@@ -136,6 +174,29 @@ Same table as above: ✅ simulator, LT/EN UI, 54 server safety tests with a fake
 1. Power the EDU module (Unitree support).
 2. First gantry test: one arm move at half speed, then STOP.
 3. Event mode over a pocket Wi‑Fi router, with `--pin`.
+
+### 6. Control straight from the Mac (no EDU computer)
+
+When the rear EDU computer (PC2) is off, the Mac can talk to the robot itself over the cable.
+
+| Way | Command | What works |
+|---|---|---|
+| A. Mac + cable | `~/r1/start-robot.sh mac` | state, voice, LED, volume |
+| B. EDU computer (PC2) | `~/r1/start-robot.sh pc2 4821` | everything: moves, arms, hands |
+| C. Event (phone over Wi‑Fi) | `~/r1/start-robot.sh event 4821` | like A, from a phone |
+
+The Studio header shows the mode: A and C show **🟢 Robot: connected** or **🔴 Robot: not connected**; R1 Remote shows **MAC → ROBOT**.
+
+1. **Cable** into the **upper-right RJ45 under the neck**, other end into the Mac (USB‑C Ethernet adapter).
+2. **Address:** `~/r1/connect.sh en16` gives the Mac **192.168.123.222** (`~/r1/connect.sh` lists adapter names). The robot is **192.168.123.161**.
+3. **One-time setup:** `~/r1/build-cyclonedds.sh` (CycloneDDS 0.10 + Unitree SDK into `~/r1/.venv-sdk`).
+4. **Start:** `~/r1/start-robot.sh mac`. The bridge `studio/mac_bridge.py` is read-only. To let the robot speak: `~/r1/start-robot.sh mac --allow-commands`, then type **GO** in the app. STOP always disarms.
+5. **Check:** `curl -s http://127.0.0.1:8090/state` shows `"connected": true`, mode, position, velocity and robot volume.
+
+Works: ✅ robot state (motion mode, position, velocity, remote buttons) · ✅ robot voice (Unitree TTS), LED colour, volume · ✅ Kris voice (ElevenLabs) on the computer; chip 🔊 = robot, 💻 = computer.
+Not yet: ❌ arms and hands (PC2 only) · ❌ camera skills on the robot computer · ❌ arm moves from the Mac: the first arm command while walking locks the robot (FSM 816) until reboot · ⚠️ Unitree's voice speaks English and Chinese; Lithuanian text sounds wrong.
+
+**Events without the cable (plan, not bought yet):** a pocket travel router with a LAN port (e.g. GL.iNet). Robot cable into the router; the router shares the same **192.168.123.x** network over Wi‑Fi, and the Mac and phones join it. Until then: `start-robot.sh event 4821`, phone on the same Wi‑Fi as the Mac, open **http://&lt;Mac address&gt;:8080/phone.html**, PIN 4821.
 
 ---
 Known gaps and details: [studio/README.md](../studio/README.md). Licences: [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). Help us: [CONTRIBUTING.md](../CONTRIBUTING.md).
