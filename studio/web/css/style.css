@@ -137,3 +137,8 @@ button:hover { border-color: var(--ink); }
 kbd { display: grid; place-items: center; height: 34px; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 5px; font: 700 13px var(--mono); background: #fff; }
 kbd.on { background: var(--ink); color: #fff; }
 .handbtns { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+
+/* LT | EN switch */
+.langsw { display: flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.langsw button { border: 0; border-radius: 0; padding: 6px 10px; font: 700 13px var(--mono); background: var(--panel); }
+.langsw button.on { background: var(--ink); color: #fff; }

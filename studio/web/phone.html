@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>R1 Remote</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#fff;--panel:#F7F7F5;--line:#DCDCD6;--ink:#0A0A0A;--dim:#55554F;--red:#D90429;--ok:#147a3f;--warn:#8f5b00;--stop:78px;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 Inter,-apple-system,system-ui,sans-serif;overscroll-behavior:none}
+body{max-width:760px;margin:0 auto}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+h1{font:700 18px var(--mono);margin:0}
+h2{font:700 16px var(--mono);margin:0}
+h3{font:700 14px var(--mono);margin:8px 0 0;color:var(--dim)}
+.topr{display:flex;gap:8px;align-items:center}.langsw{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}.langsw button{border:0;background:var(--panel);color:var(--ink);font:700 13px var(--mono);padding:8px 10px}.langsw button.on{background:var(--ink);color:#fff}
+.pill{font:700 13px var(--mono);border:1px solid var(--warn);color:var(--warn);border-radius:4px;padding:8px 10px;background:none}
+.pill.live{border-color:var(--red);color:#fff;background:var(--red)}
+.dots{display:flex;gap:6px}
+.dot{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-bottom-width:3px;border-radius:4px;padding:3px 0;text-align:center;font-size:15px;color:var(--ink)}
+.dot.ok{border-bottom-color:var(--ok)}.dot.bad{border-bottom-color:var(--red)}.dot.warn{border-bottom-color:var(--warn)}.dot.sim{border-bottom-color:#bbb}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:15px}
+.tabs button.on{border-color:var(--red);background:var(--red);color:#fff}
+main{padding:12px 12px calc(var(--stop) + 40px);display:grid;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.mv{position:relative;min-height:92px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:8px 6px;font-size:14px;display:grid;place-items:center;gap:2px;text-align:center}
+.mv b{font-size:30px;font-weight:400;line-height:1.1}
+.mv:active{border-color:var(--red)}
+.mv.run{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.mv i{position:absolute;top:4px;right:6px;font-style:normal;font-size:13px}
+.note{color:var(--dim);font-size:14px;margin:0}
+.warn{color:var(--warn)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text],input[type=password],input:not([type]){flex:1;min-width:0;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:13px 10px;font-size:16px}
+input[type=range]{flex:1;accent-color:var(--red)}
+.btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:12px 14px;font-size:15px}
+.btn.go{border-color:var(--ok)}
+.btn.on{border-color:var(--red);background:var(--red);color:#fff}
+.btn.big{flex:1;font-size:17px;font-weight:600;padding:15px 10px}
+.btn.live{background:var(--red);border-color:var(--red);color:#fff}
+.btn[disabled]{opacity:.45}
+ol{margin:0;padding-left:24px;display:grid;gap:4px}
+.line{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;padding:8px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.line u{text-decoration:none;width:12px;height:12px;border-radius:50%;background:#bbb;align-self:center}
+.line.ok u{background:var(--ok)}.line.bad u{background:var(--red)}.line.warn u{background:var(--warn)}
+.line span{color:var(--dim);font-size:14px;text-align:right}
+.line em{grid-column:2/4;font-style:normal;font-size:14px;color:var(--warn)}
+.ptt{user-select:none;-webkit-user-select:none;touch-action:none;width:100%;min-height:120px;border-radius:4px;border:2px solid var(--line);background:var(--panel);color:var(--ink);font:700 20px var(--mono)}
+.ptt.rec{border-color:var(--red);background:#fde8ec}
+.snd{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding:6px 0}
+.snd b{flex:1;font-weight:500;min-width:0}
+.snd small{color:var(--dim)}
+.snd .btn{padding:9px 11px}
+img.cam{width:100%;border-radius:4px;background:#000;display:block}
+#stop{position:fixed;left:0;right:0;bottom:0;z-index:20;border:0;background:var(--red);color:#fff;font:700 28px var(--mono);height:calc(var(--stop) + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + var(--stop) + 12px);z-index:21;background:#0A0A0A;color:#fff;border-radius:4px;padding:10px 12px;font-size:14px;max-width:736px;margin:0 auto}
+#sheet{position:fixed;top:0;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + var(--stop));z-index:7;background:var(--bg);display:flex;flex-direction:column;max-width:760px;margin:0 auto;overflow-y:auto}
+.shead{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px}
+.shead h2{flex:1;min-width:0}
+.shead span{color:var(--dim);font-size:14px}
+#stage{position:relative;flex:1 0 42vh;min-height:240px;background:#EDEDE8;border-block:1px solid var(--line);overflow:hidden}
+#stage3d{position:absolute;inset:0}
+#loading,#cap,#ban{position:absolute;left:8px;right:8px;text-align:center;pointer-events:none}
+#loading{top:45%;color:var(--dim)}
+#cap{bottom:44px;font-size:17px;font-weight:600;text-shadow:0 0 6px #fff}
+#ban{top:8px;color:var(--warn);font-size:14px}
+.views{position:absolute;right:8px;bottom:8px;display:flex;gap:4px}
+.views button{background:#fffc;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:13px}
+#report{padding:6px 12px 0}
+#report .line{padding:5px 0;font-size:15px;grid-template-columns:18px 1fr}
+#report .line em{grid-column:2}
+#sBtns{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 12px 12px;display:flex;gap:8px;flex-wrap:wrap}
+#armbox{position:fixed;inset:0;z-index:8;background:#0009;display:grid;place-items:center;padding:16px}
+#armbox>div{background:var(--panel);border:1px solid var(--red);border-radius:4px;padding:14px;display:grid;gap:10px;max-width:440px;width:100%}
+[hidden]{display:none!important}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<header>
+  <div class="top"><h1>R1 Remote</h1><span class="topr"><span id="langBox"></span><button class="pill" id="mode" type="button" data-i18n="ph.testmode">TEST MODE</button></span></div>
+  <div class="dots" id="dots"></div>
+  <div class="tabs" id="tabs"></div>
+</header>
+<main id="main"><p class="note" data-i18n="ph.connecting">Connecting…</p></main>
+
+<section id="sheet" hidden>
+  <div class="shead"><button class="btn" id="sClose" type="button">✕</button><h2 id="sTitle"></h2><span id="sTime"></span></div>
+  <div id="stage">
+    <div id="stage3d"></div>
+    <div id="loading" data-i18n="ph.loading3d">Loading the 3D robot…</div>
+    <div id="ban"></div>
+    <div id="cap"></div>
+    <div class="views" id="views"></div>
+  </div>
+  <div id="report"></div>
+  <div id="sBtns"></div>
+</section>
+
+<section id="armbox" hidden><div>
+  <h2 data-i18n="ph.arm.h">Arm the robot</h2>
+  <p class="note" data-i18n="ph.arm.n1">Before arming: gantry on for the first moves. 2 m clear. Nobody near the arms. An adult holds the hardware remote.</p>
+  <p class="note" data-i18n="ph.arm.n2">The red STOP here is software. The real emergency stop is the remote: hold L2 + B for 5 s. The robot goes limp and can fall.</p>
+  <p class="note warn" data-i18n="ph.arm.n3">The first arm move can turn off walking until a restart. That is Unitree's known bug. Film walking first.</p>
+  <p class="note" data-i18n="ph.arm.goexplain">GO is the safety word in both languages.</p>
+  <div class="row"><input id="go" placeholder="Type GO" data-i18n-ph="ph.arm.go" autocapitalize="characters" autocomplete="off"><button class="btn go" id="armOk" type="button" data-i18n="ph.arm.ok">Arm</button><button class="btn" id="armNo" type="button" data-i18n="cancel">Cancel</button></div>
+</div></section>
+
+<div id="toast" hidden></div>
+<button id="stop" type="button">■ STOP</button>
+<input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" hidden>
+
+<script type="module">
+import * as THREE from "three";
+import { Robot3D } from "./js/robot3d.js";
+import { JOINTS, JOINT_LABELS, FACTORY_DANCES, GESTURES } from "./js/blocks.js";
+import { t, tf, applyDom, langSwitch, moveTitle, catLabel, handLabel, srv } from "./js/i18n.js";
+applyDom();
+
+const $ = (id) => document.getElementById(id);
+$("langBox").replaceWith(langSwitch());  // reload: the server keeps the armed state; the PIN is asked again
+const DEMO = window.R1_DEMO || null;
+const media = (path) => (DEMO ? DEMO.audio(path) : path);
+const ORDER = ["Games", "Emotions", "Reactions", "Viral", "Movies", "Fight", "Objects"];
+const FRAME_PEAK = 1.2;                       // rad/s, top joint speed of a stop-motion stroke
+const DOTS = [["robot", "🤖"], ["hand_right", "✋"], ["camera", "📷"], ["speaker", "🔊"], ["voice", "🗣️"]];
+const SPEED_CAP = 2.0;                        // r1_arm hard cap, rad/s
+const HEAD = new THREE.Vector3(0.01, 0, 0.37); // head centre in the torso frame, from Unitree's mesh
+const HEAD_R = 0.085;                          // head radius, m
+const TORSO = [[-0.098, -0.10, -0.20], [0.071, 0.10, 0.26]];  // chest and belly box in the same frame
+const IDLE_DISARM_MS = 15 * 60 * 1000;
+
+let LIB = { dances: {}, hands: {} }, STATUS = { verified: {} }, HEALTH = null, QUICK = [], SOUNDS = { sounds: [] }, POSES = [];
+let frames = [], hold = 0.6;
+let armed = false, tab = DEMO ? "Games" : "Check", show = [], building = false, instant = false, PIN = "", voiceStyle = "robot", voiceEngine = "eleven", handSide = "right";
+let R = null, cur = null, previewCtl = null, lastAct = Date.now(), askedAfter = null, askedSpeed = 0.5;
+const ARMROWS = {};
+
+// ---------------------------------------------------------------- basics
+function toast(msg, ms) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, ms || 2600); }
+async function api(path, body) {
+  const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json", "X-R1-Pin": PIN }, body: JSON.stringify(body) };
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 403) { askPin(); throw new Error(t("ph.pinneeded")); }
+  if (/^(Not armed|Stopped\.)/.test(j.error || "")) { armed = false; paint(); }
+  if (!r.ok || j.error) throw new Error(srv(j.error) || t("ph.noanswer"));
+  return j;
+}
+async function postRaw(path, buffer) {
+  const r = await fetch(path, { method: "POST", headers: { "X-R1-Pin": PIN }, body: buffer });
+  if (r.status === 403) { askPin(); throw new Error(t("ph.pinneeded")); }
+  if (!r.ok) throw new Error(srv((await r.json().catch(() => ({}))).error) || t("ph.noanswer"));
+  return r;
+}
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function btn(text, cls, fn) { const b = el("button", "btn " + (cls || ""), text); b.type = "button"; b.onclick = fn; return b; }
+function note(text, warn) { return el("p", "note" + (warn ? " warn" : ""), text); }
+function row(...kids) { const r = el("div", "row"); r.append(...kids); return r; }
+function grid(items) { const g = el("div", "grid"); g.append(...items); return g; }
+function tile(emoji, title, fn, mark) {
+  const b = el("button", "mv"); b.type = "button";
+  b.append(el("b", "", emoji || "🤖"), el("span", "", title));
+  if (mark) b.append(el("i", "", mark));
+  b.onclick = () => fn(b); return b;
+}
+const sleep = (ms, sig) => new Promise((res) => { const t = setTimeout(res, ms); if (sig) sig.addEventListener("abort", () => { clearTimeout(t); res(); }); });
+const moved = () => { lastAct = Date.now(); };
+
+// ---------------------------------------------------------------- moves as items
+function danceItem(n) { const d = LIB.dances[n]; return { key: n, title: moveTitle(n, d.title), emoji: d.emoji, steps: [{ dance: n }], seconds: d.seconds }; }
+function partsOf(item) {
+  const steps = item.steps.length === 1 && item.steps[0].dance && LIB.dances[item.steps[0].dance] ? LIB.dances[item.steps[0].dance].steps : item.steps;
+  return steps.every((s) => s.dance) ? steps.map((s) => s.dance) : [item.key];
+}
+const seen = (k) => (STATUS.verified || {})[k];
+function verifiedOk(item) { return partsOf(item).every((k) => seen(k) && seen(k).ok); }
+function fullOk(item) { return partsOf(item).every((k) => seen(k) && seen(k).ok && seen(k).speed >= 1); }
+function markBad(item) { return partsOf(item).some((k) => seen(k) && !seen(k).ok); }
+function markFor(item) { return markBad(item) ? "❌" : verifiedOk(item) ? "✅" : ""; }
+function danceTiles(names) {
+  return names.map((n) => { const it = danceItem(n); return tile(it.emoji, it.title.replace(/^RPS: |^Hide and seek: |^Slėpynės: /, ""), (b) => pick(it, b), markFor(it)); });
+}
+function byCat(c) { return Object.keys(LIB.dances).filter((n) => LIB.dances[n].category === c); }
+function pick(item, b) {
+  moved();
+  if (building && item.steps[0].dance) { show.push({ name: item.steps[0].dance, label: item.title }); toast(t("ph.added", { t: item.title })); return render(); }
+  if (armed && (item.quick || (instant && fullOk(item)))) return runLive(item, 1, b);
+  openSheet(item);
+}
+
+// ---------------------------------------------------------------- emulator
+async function robot3d() {
+  if (R) return R;
+  R = new Robot3D($("stage3d"));
+  await R.load("model/r1.json");
+  return R;
+}
+const armRows = async (f) => ARMROWS[f] || (ARMROWS[f] = await api("/api/arm/" + encodeURIComponent(f)));
+
+function collect(steps, a) {
+  for (const s of steps) {
+    const [k, v] = Object.entries(s)[0];
+    if (k === "parallel" || k === "random") collect(v, a);
+    else if (k === "repeat") collect(v.steps, a);
+    else if (k === "dance") { if (LIB.dances[v]) collect(LIB.dances[v].steps, a); else a.missing.push(v); }
+    else if (k === "arm_traj") a.arm.push(typeof v === "string" ? v : v.file);
+    else if (k === "arm_pose") a.poses.push(v.q);
+    else if (k === "hand") a.hands.add(handLabel(v.pose || "custom"));
+    else if (k === "grab" || k === "release") a.hands.add(handLabel(k));
+    else if (k === "say") a.says.push(typeof v === "string" ? v : v.text);
+    else if (k === "fsm" || k === "arm_preset") a.factory = true;
+    else if (k === "loco") a.walk = true;
+    else if (k === "ai") a.ai = true;
+  }
+  return a;
+}
+
+// Points on each stand-in hand: every finger's base, middle and tip, plus the palm.
+let HANDPTS = null;
+function handPoints() {
+  if (HANDPTS) return HANDPTS;
+  const side = (s) => {
+    const a = [], palm = R.fingers[s][0].parent;
+    for (const f of R.fingers[s]) { const L = f.children[0].geometry.parameters.width; [0, L / 2, L].forEach((x) => a.push([f, new THREE.Vector3(x, 0, 0), new THREE.Vector3()])); }
+    [0, 0.035, 0.07].forEach((x) => a.push([palm, new THREE.Vector3(x, 0, 0), new THREE.Vector3()]));
+    return a;
+  };
+  return HANDPTS = { left: side("left"), right: side("right") };
+}
+// The forearm, elbow to wrist. Only stop motions need this: library moves passed Unitree's full body shapes.
+function forearm(s) {
+  const e = R.joints[s + "_elbow"].pivot, w = R.joints[s + "_wrist_roll"].pivot;
+  return [0, 0.33, 0.66, 1].map((u) => [e, w, u, new THREE.Vector3(), new THREE.Vector3()]);
+}
+function boxGap(p) {
+  const [lo, hi] = TORSO, d = (i, v) => Math.max(lo[i] - v, 0, v - hi[i]), outside = Math.hypot(d(0, p.x), d(1, p.y), d(2, p.z));
+  return outside > 0 ? outside : -Math.min(p.x - lo[0], hi[0] - p.x, p.y - lo[1], hi[1] - p.y, p.z - lo[2], hi[2] - p.z);  // below 0 = inside
+}
+// Measures one move on the 3D model: limits, top speed, reach, and how close the hands get to the head, the body and each other.
+function measure(rows, out) {
+  const keep = R.q.slice(), keepH = { left: R.handQ.left.slice(), right: R.handQ.right.slice() };
+  R.handQ = { left: Array(6).fill(0), right: Array(6).fill(0) };  // fingers straight = the longest they get
+  const inner = R.joints.waist_yaw.pivot.children[0], P = handPoints(), head = new THREE.Vector3(), toBody = new THREE.Matrix4(), v = new THREE.Vector3();
+  const arms = [...forearm("left"), ...forearm("right")];
+  for (let i = 0; i < rows.length; i++) {
+    const q = rows[i].slice(1);
+    q.forEach((val, j) => {
+      const r = R.joints[JOINTS[j]] && R.joints[JOINTS[j]].range;
+      if (r && (val < r[0] - 0.01 || val > r[1] + 0.01)) out.beyond = out.beyond || JOINT_LABELS[j];
+      if (!r && Math.abs(val) > 0.001) out.headMoves = true;
+      if (i) { const dt = Math.max(1e-3, rows[i][0] - rows[i - 1][0]), sp = Math.abs(val - rows[i - 1][j + 1]) / dt; if (sp > out.peak) { out.peak = sp; out.peakJoint = JOINT_LABELS[j]; } }
+    });
+    if (i % 5) continue;  // 10 samples a second is plenty
+    R.q = q; R.apply(); R.scene.updateMatrixWorld(true);
+    head.copy(HEAD); inner.localToWorld(head); toBody.copy(inner.matrixWorld).invert();
+    for (const s of ["left", "right"]) for (const [obj, local, w] of P[s]) {
+      w.copy(local); obj.localToWorld(w);
+      out.reach = Math.max(out.reach, Math.hypot(w.x, w.z));
+      out.headGap = Math.min(out.headGap, w.distanceTo(head) - HEAD_R);
+      out.bodyGap = Math.min(out.bodyGap, boxGap(v.copy(w).applyMatrix4(toBody)));
+    }
+    for (const a of P.left) for (const b of P.right) out.handGap = Math.min(out.handGap, a[2].distanceTo(b[2]) - 0.03);
+    for (const [e, w, u, a, b] of arms) {
+      a.set(0, 0, 0); e.localToWorld(a); b.set(0, 0, 0); w.localToWorld(b); a.lerp(b, u);
+      out.armGap = Math.min(out.armGap, a.distanceTo(head) - HEAD_R - 0.04, boxGap(v.copy(a).applyMatrix4(toBody)) - 0.035);
+    }
+  }
+  R.q = keep; R.handQ = keepH; R.apply();
+}
+async function analyze(item) {
+  const a = collect(item.steps, { arm: [], poses: [], hands: new Set(), says: [], factory: false, walk: false, ai: false, missing: [] });
+  a.peak = 0; a.peakJoint = ""; a.beyond = null; a.reach = 0; a.headGap = a.bodyGap = a.handGap = a.armGap = 9; a.headMoves = false;
+  a.uncleared = [...new Set(a.arm)].filter((f) => (LIB.uncleared || []).includes(f));
+  a.mine = a.arm.some((f) => f === DRAFT || f.startsWith("u_"));
+  for (const f of new Set(a.arm)) measure(await armRows(f), a);
+  for (const q of a.poses) measure([[0, ...q], [1, ...q]], a);
+  a.moves = a.arm.length + a.poses.length > 0;
+  return a;
+}
+function reportLines(item, a) {
+  const L = [];
+  const add = (state, text, sub) => L.push({ state, text, sub });
+  if (a.missing.length) add("bad", t("ph.missing", { x: a.missing.join(", ") }));
+  if (a.uncleared.length) add("bad", t("ph.uncleared", { x: a.uncleared.join(", ") }));
+  if (a.moves) {
+    add(a.beyond ? "bad" : "ok", a.beyond ? t("ph.beyond", { x: a.beyond }) : t("ph.inlimits"));
+    add(a.peak > SPEED_CAP ? "warn" : "ok", t("ph.topspeed", { p: a.peak.toFixed(1), c: SPEED_CAP }), a.peak > SPEED_CAP ? t("ph.lag") : "");
+    const cm = (g) => Math.round(g * 100);
+    const hit = [["head", a.headGap], ["body", a.bodyGap], ["other hand", a.handGap]].filter(([, g]) => g < 0);
+    if (hit.length) add("bad", t("ph.into", { x: hit.map(([n, g]) => t("ph.into.part", { n: t("ph.part." + n), cm: cm(-g) })).join(t("ph.into.join")) }));
+    else {
+      const tight = Math.min(a.headGap, a.bodyGap, a.handGap) < 0.02;
+      add(tight ? "warn" : "ok", t("ph.clear", { h: cm(a.headGap), b: cm(a.bodyGap), o: cm(a.handGap) }), tight ? t("ph.tight") : "");
+    }
+    if (a.mine) add(a.armGap < 0 ? "bad" : "warn", a.armGap < 0 ? t("ph.forearm") : t("ph.mine"));
+    add("", t("ph.shapes"));
+    add("", t("ph.reach", { r: a.reach.toFixed(2) }));
+    if (a.headMoves) add("", t("ph.headmoves"));
+  }
+  if (a.factory) {
+    add("warn", t("ph.factory1"));
+    add("warn", t("ph.factory2"));
+  } else if (a.walk) add("warn", t("ph.walks"));
+  else if (a.moves) add("", t("ph.armsonly"));
+  if (byCat("Objects").includes(item.key)) add("warn", t("ph.objects"));
+  if (a.hands.size) add("", t("ph.handslist", { x: [...a.hands].join(", ") }));
+  if (a.says.length) add("", t("ph.says", { x: [...new Set(a.says)].join(" · ") }));
+  if (markBad(item)) add("bad", t("ph.markbad"));
+  else if (fullOk(item)) add("ok", t("ph.fullok"));
+  else if (verifiedOk(item)) add("warn", t("ph.halfok"));
+  else if (a.factory && !a.moves) add("warn", t("ph.unseen.fac"));
+  else add("warn", t("ph.unseen"));
+  return L;
+}
+const blocked = (a) => a.missing.length || a.uncleared.length || a.beyond || Math.min(a.headGap, a.bodyGap, a.handGap, a.mine ? a.armGap : 9) < 0;
+
+function drawReport() {
+  const box = $("report"); box.replaceChildren();
+  for (const l of cur.lines) {
+    const d = el("div", "line " + l.state); d.append(el("u"), el("b", "", "")); d.children[1].style.fontWeight = 400; d.children[1].textContent = l.text;
+    if (l.sub) d.append(el("em", "", l.sub));
+    box.append(d);
+  }
+}
+function drawButtons() {
+  const b = $("sBtns"); b.replaceChildren();
+  const again = btn(t("ph.again"), "", () => preview(1));
+  if (askedAfter) {
+    b.append(el("p", "note", t("ph.match")));
+    b.lastChild.style.width = "100%";
+    b.append(btn(t("ph.yes"), "big go", () => verdict(true)), btn(t("ph.no"), "big", () => verdict(false)));
+    return;
+  }
+  if (cur.draft) { b.append(again, note(cur.report && blocked(cur.report) ? t("ph.cantsave") : DEMO ? t("ph.demosave") : t("ph.looksright"), cur.report && blocked(cur.report))); return; }
+  if (!STATUS.live_allowed) { b.append(again); const n = note(t("ph.testnote")); n.style.alignSelf = "center"; b.append(n); return; }
+  if (cur.report && blocked(cur.report)) { b.append(again); b.append(note(t("ph.fixfirst"), true)); return; }
+  if (!armed) { b.append(again, btn(t("ph.arm.h"), "big", () => openArm())); return; }
+  const factory = cur.report && cur.report.factory;
+  if (factory) { b.append(again, btn(t("ph.runfac"), "big live", () => runLive(cur, 1))); return; }
+  b.append(again, btn(t("ph.half"), "big" + (verifiedOk(cur) ? "" : " live"), () => runLive(cur, 0.5)));
+  if (verifiedOk(cur)) b.append(btn(fullOk(cur) ? t("ph.run") : t("ph.firstfull"), "big live", () => runLive(cur, 1)));
+}
+async function openSheet(item) {
+  stopPreview(); cur = item; askedAfter = null;
+  $("sheet").hidden = false; $("sTitle").textContent = item.title; $("sTime").textContent = item.seconds ? item.seconds + " s" : "";
+  $("report").replaceChildren(); $("sBtns").replaceChildren(); $("cap").textContent = ""; $("ban").textContent = "";
+  $("loading").hidden = false;
+  try { await robot3d(); } catch (e) { $("loading").textContent = t("ph.3dfail", { e: e.message }); return; }
+  $("loading").hidden = true;
+  try { item.report = await analyze(item); } catch (e) { $("report").append(note("⚠️ " + e.message, true)); return; }
+  item.lines = reportLines(item, item.report);
+  drawReport(); drawButtons();
+  preview(1);
+}
+function stopPreview() { if (previewCtl) previewCtl.abort(); previewCtl = null; }
+async function preview(speed) {
+  stopPreview();
+  const ctl = previewCtl = new AbortController();
+  R.setPose(Array(13).fill(0));
+  R.handQ = { left: Array(6).fill(0), right: Array(6).fill(0) }; R.apply();
+  $("ban").textContent = speed < 1 ? t("ph.halfban") : "";
+  await sim(cur.steps, ctl.signal, speed);
+  if (!ctl.signal.aborted) { $("cap").textContent = ""; if (!cur.report.factory) $("ban").textContent = ""; }
+}
+async function sim(steps, sig, speed) {
+  for (const s of steps) {
+    if (sig.aborted) return;
+    const [k, a] = Object.entries(s)[0];
+    if (k === "parallel") await Promise.all(a.map((x) => sim([x], sig, speed)));
+    else if (k === "random") await sim([a[Math.floor(Math.random() * a.length)]], sig, speed);
+    else if (k === "repeat") { for (let i = 0; i < a.times && !sig.aborted; i++) await sim(a.steps, sig, speed); }
+    else if (k === "dance") { if (LIB.dances[a]) await sim(LIB.dances[a].steps, sig, speed); }
+    else if (k === "arm_traj") await R.playTraj(await armRows(typeof a === "string" ? a : a.file), (a.speed || 1) * speed, sig);
+    else if (k === "arm_pose") await R.moveTo(a.q, (a.max_vel || 0.8) * speed, sig);
+    else if (k === "hand" || k === "grab" || k === "release") {
+      const q = k === "grab" ? Array(6).fill(a.strength || 0.7) : k === "release" ? Array(6).fill(0) : a.q || LIB.hands[a.pose];
+      if (q) await R.hand(a.side || "right", q, (a.ms || 600) / speed, sig);
+    } else if (k === "wait") await sleep(a * 1000 / speed, sig);
+    else if (k === "say") await sayHere(typeof a === "string" ? a : a.text, sig);
+    else if (k === "fsm") { $("ban").textContent = t("ph.facban", { a }); await R.sway(5000, sig); }
+    else if (k === "arm_preset") { $("ban").textContent = t("ph.gesban", { a }); await R.sway(2500, sig); }
+    else if (k === "loco") { $("ban").textContent = t("ph.walkban"); await sleep((a.seconds || 1) * 1000, sig); }
+  }
+}
+async function sayHere(text, sig) {
+  $("cap").textContent = "“" + text + "”";
+  const a = new Audio(media("/api/tts?text=" + encodeURIComponent(text)));
+  let done = false;
+  const ended = new Promise((res) => { a.onended = res; a.onerror = res; });
+  a.play().catch(() => {});
+  sig.addEventListener("abort", () => { done = true; a.pause(); });
+  await Promise.race([ended, sleep(Math.max(1500, text.length * 90), sig)]);
+  if (!done) await sleep(100, sig);
+  if ($("cap").textContent === "“" + text + "”") $("cap").textContent = "";
+}
+
+// ---------------------------------------------------------------- real robot
+async function runLive(item, speed, tileEl) {
+  moved();
+  const step = item.steps.length === 1 ? item.steps[0] : { repeat: { times: 1, steps: item.steps } };
+  if (tileEl) tileEl.classList.add("run");
+  const onSheet = !$("sheet").hidden && cur === item;
+  if (onSheet) { preview(speed); $("sBtns").replaceChildren(note(t("ph.moving"), true)); }
+  try {
+    const r = await api("/api/step", { step, live: true, speed });
+    if (r.stopped) { /* the STOP button already said what happens next */ }
+    else if (r.warnings && r.warnings.length) toast("⚠️ " + r.warnings.map(srv).join(" · "), 6000);
+    else if (!onSheet) toast("▶ " + item.title);
+    if (onSheet) { askedAfter = !r.stopped && !item.quick && r.live ? item : null; askedSpeed = (r.warnings || []).some((w) => /half speed/.test(w)) ? 0.5 : speed; drawButtons(); }
+  } catch (e) { toast("⚠️ " + e.message, 5000); if (onSheet) drawButtons(); }
+  if (tileEl) tileEl.classList.remove("run");
+}
+async function verdict(ok) {
+  const item = askedAfter; askedAfter = null;
+  try {
+    for (const k of partsOf(item)) STATUS.verified = (await api("/api/verified", { name: k, ok, speed: askedSpeed })).verified;
+    item.lines = reportLines(item, item.report); drawReport();
+  } catch (e) { toast("⚠️ " + e.message, 4000); }
+  drawButtons();
+}
+// Moves need arming. Words, sounds and lights do not move anything, so they work whenever the robot is connected.
+async function act(step, label) {
+  moved();
+  try {
+    const r = await api("/api/step", { step, live: !!STATUS.live_allowed });
+    if (!r.live) toast(t("ph.test", { l: label }));
+    else toast((r.warnings && r.warnings.length ? "⚠️ " + r.warnings.map(srv).join(" · ") : "▶ " + label), r.warnings && r.warnings.length ? 6000 : 2200);
+  } catch (e) { toast("⚠️ " + e.message, 5000); }
+}
+// Words never wait for a move, and a new line replaces the one playing.
+async function speak(text, voice) {
+  moved();
+  try {
+    const r = await api("/api/say", { text, voice, fx: voiceStyle, live: !!STATUS.live_allowed });
+    if (r.live) return toast("🗣️ " + text);
+    const src = media("/api/tts?text=" + encodeURIComponent(text) + "&fx=" + voiceStyle);
+    if (!src) return toast(t("ph.demo1"), 4000);
+    toast(t("ph.playhere", { w: t(DEMO ? "ph.demo" : "ph.emu") })); new Audio(src).play().catch(() => {});
+  } catch (e) { toast("⚠️ " + e.message, 6000); }
+}
+function openArm() {
+  if (!STATUS.live_allowed) return toast(t("ph.noarmhere", { w: t(DEMO ? "ph.demo.l" : "ph.emu.l") }), 4000);
+  $("go").value = ""; $("armbox").hidden = false; $("go").focus();
+}
+$("armOk").onclick = async () => {
+  if ($("go").value.trim().toUpperCase() !== "GO") return toast(t("ph.typego"));
+  try { await api("/api/arm", { go: "GO" }); } catch (e) { return toast("⚠️ " + e.message, 5000); }
+  armed = true; moved(); $("armbox").hidden = true; paint(); if (!$("sheet").hidden) drawButtons();
+};
+$("armNo").onclick = () => { $("armbox").hidden = true; };
+function disarm(why) {
+  armed = false; instant = false; paint(); if (why) toast(why, 5000);
+  api("/api/end", {}).then((r) => { if (r.stopped) toast(t("ph.walkhome"), 5000); }).catch(() => {});
+  if (!$("sheet").hidden) drawButtons();
+}
+$("mode").onclick = () => (armed ? disarm() : openArm());
+setInterval(() => { if (armed && Date.now() - lastAct > IDLE_DISARM_MS) disarm(t("ph.idle")); }, 30000);
+$("stop").onclick = async () => {
+  stopPreview();
+  armed = false; instant = false; askedAfter = null; paint();
+  if (!$("sheet").hidden && cur) drawButtons(); else if ($("sheet").hidden) render();
+  try { await api("/api/stop", {}); toast(STATUS.live_allowed ? t("ph.stopped.live") : t("ph.stopped"), 6000); } catch (e) { toast(t("ph.stopfail"), 6000); }
+};
+$("sClose").onclick = () => { stopPreview(); $("sheet").hidden = true; askedAfter = null; render(); };
+$("views").append(...[[t("view.front"), "front"], [t("view.side"), "side"], [t("view.close"), "close"]].map(([t, v]) => { const b = el("button", "", t); b.type = "button"; b.onclick = () => R && R.view(v); return b; }));
+
+// ---------------------------------------------------------------- PIN
+function askPin() {
+  if ($("pinbox")) return;
+  const box = el("section"); box.id = "pinbox"; box.style.cssText = "position:fixed;inset:0;z-index:11;background:var(--bg);display:grid;place-items:center;padding:16px";
+  const c = el("div"); c.style.cssText = "display:grid;gap:10px;width:100%;max-width:320px";
+  const i = document.createElement("input"); i.type = "password"; i.placeholder = t("ph.pin"); i.inputMode = "numeric";
+  c.append(el("h2", "", t("ph.pin")), i, btn(t("ph.enter"), "big go", () => { PIN = i.value.trim(); box.remove(); }));
+  box.append(c); document.body.append(box); i.focus();
+}
+
+// ---------------------------------------------------------------- health dots
+function paint() {
+  const b = $("mode"); b.textContent = armed ? t("ph.mode.live") : STATUS.live_allowed ? t("ph.mode.arm") : DEMO ? t("ph.mode.demo") : t("ph.mode.emu");
+  b.classList.toggle("live", armed);
+  const items = HEALTH ? HEALTH.items : [];
+  $("dots").replaceChildren(...DOTS.map(([id, e]) => {
+    const it = items.find((x) => x.id === id), d = el("button", "dot " + (it ? it.state : ""), e);
+    d.type = "button"; d.title = it ? tf("hl." + it.id, it.label) + ": " + srv(it.note) : e; d.onclick = () => { tab = "Check"; refreshHealth(); render(); };
+    return d;
+  }));
+}
+async function refreshHealth() {
+  try {
+    [HEALTH, STATUS] = await Promise.all([api("/api/health"), api("/api/status")]);
+    armed = !!STATUS.armed; if (!armed) instant = false;
+    paint(); if (tab === "Check" && $("sheet").hidden) render();
+  } catch (e) { toast(t("ph.noserver"), 4000); }
+}
+setInterval(() => { if (!document.hidden) refreshHealth(); }, 30000);
+
+// ---------------------------------------------------------------- microphone
+const micReady = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && !DEMO;
+function secureUrl() { return STATUS.https_port ? `https://${location.hostname}:${STATUS.https_port}/phone.html` : ""; }
+function toPcm(f) {
+  let peak = 0.001; for (let i = 0; i < f.length; i++) peak = Math.max(peak, Math.abs(f[i]));
+  const gain = Math.min(4, 0.9 / peak), pcm = new Int16Array(f.length);
+  for (let i = 0; i < f.length; i++) pcm[i] = Math.max(-32768, Math.min(32767, f[i] * gain * 32767));
+  return pcm;
+}
+async function to16k(buffer) {
+  const off = new OfflineAudioContext(1, Math.ceil(buffer.duration * 16000), 16000);
+  const s = off.createBufferSource(); s.buffer = buffer; s.connect(off.destination); s.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+let ptt = null;
+async function talkStart(b) {
+  if (ptt) return;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();  // inside the tap, or phones keep it asleep
+  ctx.resume().catch(() => {});
+  const me = ptt = { cancelled: false };
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    if (me.cancelled) { stream.getTracks().forEach((t) => t.stop()); ctx.close(); ptt = null; return; }
+    const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1), chunks = [];
+    proc.onaudioprocess = (e) => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    src.connect(proc); proc.connect(ctx.destination);
+    Object.assign(me, { stream, ctx, proc, chunks });
+    b.classList.add("rec"); b.textContent = t("ph.speaknow");
+  } catch (e) { ptt = null; ctx.close(); toast(t("ph.mic", { e: e.message }), 5000); }
+}
+async function talkStop(b) {
+  const p = ptt; if (!p) return;
+  p.cancelled = true; ptt = null;
+  b.classList.remove("rec"); b.textContent = t("ph.holdtalk");
+  if (!p.stream) return;
+  const rate = p.ctx.sampleRate;
+  p.proc.disconnect(); p.stream.getTracks().forEach((t) => t.stop()); await p.ctx.close();
+  const n = p.chunks.reduce((a, c) => a + c.length, 0);
+  if (n < rate * 0.25) return toast(t("ph.short"));
+  const joined = new Float32Array(n); let o = 0; for (const c of p.chunks) { joined.set(c, o); o += c.length; }
+  const buf = new AudioBuffer({ length: n, sampleRate: rate, numberOfChannels: 1 }); buf.copyToChannel(joined, 0);
+  try {
+    const live = STATUS.live_allowed ? 1 : 0;
+    const r = await postRaw(`/api/voice?live=${live}&fx=${voiceStyle}`, toPcm(await to16k(buf)).buffer);
+    if (live) toast(t("ph.sent"));
+    else { toast(t("ph.emuplay")); new Audio(URL.createObjectURL(await r.blob())).play().catch(() => {}); }
+  } catch (e) { toast("⚠️ " + e.message, 5000); }
+}
+
+// ---------------------------------------------------------------- sounds
+async function loadSounds() { try { SOUNDS = await api("/api/sounds"); } catch (e) { toast("⚠️ " + e.message); } }
+async function addSound(file) {
+  if (!file) return;
+  const name = file.name.replace(/\.[^.]+$/, "");
+  toast(t("ph.reading", { n: name }), 120000);
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext, ctx = new Ctx();
+    const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+    ctx.close();
+    const pcm = toPcm(await to16k(decoded));
+    await postRaw("/api/sound_upload?name=" + encodeURIComponent(name), pcm.buffer);
+    toast(t("ph.saved", { n: name })); await loadSounds(); render();
+  } catch (e) { toast(t("ph.badfile", { e: e.message }), 6000); }
+}
+$("file").onchange = (e) => { addSound(e.target.files[0]); e.target.value = ""; };
+function hear(name) { new Audio(media("/api/sound?name=" + encodeURIComponent(name))).play().catch(() => toast(t("ph.tapagain"))); }
+async function playSound(name) {
+  moved();
+  if (!STATUS.live_allowed) return hear(name);
+  try { await api("/api/sound_play", { name, live: true }); toast("🔊 " + name); await loadSounds(); if (tab === "Sound") render(); } catch (e) { toast("⚠️ " + e.message, 5000); }
+}
+function soundRow(s) {
+  const d = el("div", "snd"); d.append(el("b", "", s.name), el("small", "", s.secs >= 60 ? t("ph.min", { n: Math.round(s.secs / 60) }) : t("ph.sec", { n: Math.round(s.secs) })));
+  d.append(btn("🎧", "", () => hear(s.name)), btn(STATUS.live_allowed ? t("ph.robotbtn") : "▶", "go", () => playSound(s.name)));
+  if (s.mine) d.append(btn("🗑", "", async () => { try { await api("/api/sound_delete", { name: s.name }); await loadSounds(); render(); } catch (e) { toast("⚠️ " + e.message); } }));
+  return d;
+}
+
+// ---------------------------------------------------------------- tabs
+const DRAFT = "_draft";
+const fix4 = (v) => +v.toFixed(4);
+function stroke(from, to, t0) {
+  const dur = Math.max(0.3, 1.5 * Math.max(...to.map((v, i) => Math.abs(v - from[i]))) / FRAME_PEAK), n = Math.round(dur * 50), out = [];
+  for (let i = 0; i < n; i++) { const u = i / n, s = u * u * (3 - 2 * u); out.push([fix4(t0 + dur * u), ...from.map((v, j) => fix4(v + (to[j] - v) * s))]); }
+  return { rows: out, dur };
+}
+function strokeHits(from, to) {
+  const t = { peak: 0, peakJoint: "", beyond: null, reach: 0, headGap: 9, bodyGap: 9, handGap: 9, armGap: 9, headMoves: false };
+  measure(stroke(from, to, 0).rows, t);
+  return Math.min(t.headGap, t.bodyGap, t.handGap, t.armGap) < 0;
+}
+// A straight line between two poses can pass through the body. Such a stroke goes back through Rest instead.
+async function framesToRows(list = frames) {
+  await robot3d();
+  const rest = Array(13).fill(0), rows = []; let t = 0, q = rest;
+  const go = (to) => { const s = stroke(q, to, t); rows.push(...s.rows); t += s.dur; q = to; };
+  for (const f of list) {
+    if (strokeHits(q, f.q)) go(rest);
+    go(f.q); rows.push([fix4(t), ...q]); t += hold;
+  }
+  go(rest); rows.push([fix4(t), ...q]);
+  return rows;
+}
+async function previewFrames() {
+  const rows = ARMROWS[DRAFT] = await framesToRows();
+  openSheet({ key: "draft", draft: true, title: t("ph.mystop"), seconds: Math.round(rows[rows.length - 1][0]), steps: [{ arm_traj: DRAFT }] });
+}
+async function saveFrames(name) {
+  if (!name.trim()) return toast(t("ph.giveName"));
+  try {
+    const rows = ARMROWS[DRAFT] = await framesToRows();
+    if (blocked(await analyze({ steps: [{ arm_traj: DRAFT }] }))) return toast(t("ph.collides"), 6000);
+    const r = await api("/api/arm_save", { name, rows });
+    await api("/api/save", { name, title: name, emoji: "🎞️", steps: [{ arm_traj: { file: r.name } }] });
+    LIB = await api("/api/library"); frames = []; toast(t("ph.saved", { n: name })); render();
+  } catch (e) { toast("⚠️ " + e.message, 5000); }
+}
+
+const VIEWS = {
+  Check(m) {
+    m.append(row(el("h2", "", t("ph.check.h")), btn(t("refresh"), "", () => { HEALTH = null; refreshHealth(); })));
+    if (!STATUS.live_allowed) m.append(note(DEMO ? t("ph.check.demo") : t("ph.check.emu")));
+    if (!HEALTH) m.append(note(t("ph.checking")));
+    else for (const it of HEALTH.items) {
+      const d = el("div", "line " + it.state); d.append(el("u"), el("b", "", tf("hl." + it.id, it.label)), el("span", "", srv(it.note)));
+      if (it.fix) d.append(el("em", "", srv(it.fix)));
+      m.append(d);
+    }
+    if (!DEMO) {
+      const mic = el("div", "line " + (micReady() ? "ok" : "warn")); mic.append(el("u"), el("b", "", t("ph.devmic")), el("span", "", micReady() ? t("ph.ready") : t("ph.blocked")));
+      if (!micReady()) mic.append(el("em", "", secureUrl() ? t("ph.opensecure") : t("ph.needhttps")));
+      m.append(mic);
+    }
+    m.append(el("h3", "", t("ph.onetap")));
+    const R0 = (side, pose) => ({ key: "t", title: t("ph.handtest", { s: t("side." + side), p: handLabel(pose) }), quick: true, steps: [{ hand: { side, pose, ms: 500 } }] });
+    m.append(grid([
+      tile("✋", t("ph.ropen"), (b) => pick(R0("right", "open"), b)), tile("✊", t("ph.rfist"), (b) => pick(R0("right", "fist"), b)),
+      tile("✋", t("ph.lopen"), (b) => pick(R0("left", "open"), b)), tile("✊", t("ph.lfist"), (b) => pick(R0("left", "fist"), b)),
+      tile("🔔", t("ph.speaker"), () => playSound("Ding")), tile("🗣️", t("ph.voice"), () => speak(QUICK[0] || "Labas", "eleven")),
+      tile("🔴", t("ph.lightred"), () => act({ led: [255, 0, 0] }, t("ph.redlight"))), tile("🟢", t("ph.lightgreen"), () => act({ led: [0, 255, 0] }, t("ph.greenlight"))),
+    ]));
+    const sw = btn(instant ? t("ph.showon") : t("ph.showoff"), instant ? "on" : "", () => { instant = !instant; render(); });
+    m.append(sw, note(t("ph.shownote")));
+  },
+  Games(m) {
+    m.append(note(t("ph.games.n")));
+    m.append(grid(danceTiles(byCat("Games"))));
+    m.append(grid([tile("🎲", t("ph.random"), (b) => { const o = ["rps_rock", "rps_paper", "rps_scissors"], n = o[Math.floor(Math.random() * 3)]; const it = danceItem(n); it.title = t("ph.random"); pick(it, b); })]));
+    m.append(note(t("ph.games.n2")));
+  },
+  Hands(m) {
+    const sides = ["right", "left", "both"];
+    m.append(row(...sides.map((s) => btn(t("ph." + s), handSide === s ? "on" : "", () => { handSide = s; render(); }))));
+    m.append(note(t("ph.hands.n")));
+    m.append(grid(Object.keys(LIB.hands).map((p) => tile("✋", handLabel(p), (b) => pick({ key: "hand_" + p, title: t("ph.handt", { p: handLabel(p) }), steps: [{ hand: { side: handSide, pose: p, ms: 300 } }] }, b)))));
+  },
+  Voice(m) {
+    m.append(row(btn(t("ph.robotvoice"), voiceStyle === "robot" ? "on" : "", () => { voiceStyle = "robot"; render(); }), btn(t("ph.cleanvoice"), voiceStyle === "none" ? "on" : "", () => { voiceStyle = "none"; render(); })));
+    if (micReady()) {
+      const b = el("button", "ptt", t("ph.holdtalk")); b.type = "button";
+      b.onpointerdown = (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); talkStart(b); };
+      b.onpointerup = () => talkStop(b); b.onpointercancel = () => talkStop(b); b.oncontextmenu = (e) => e.preventDefault();
+      m.append(b, note(t("ph.talk.n")));
+    } else if (DEMO) m.append(note(t("ph.talk.demo")));
+    else {
+      m.append(note(t("ph.talk.http"), true));
+      if (secureUrl()) { const a = el("a", "btn go", t("ph.opensecurebtn")); a.href = secureUrl(); a.style.textAlign = "center"; a.style.textDecoration = "none"; m.append(a, note(t("ph.certwarn"))); }
+    }
+    const i = el("input"); i.placeholder = t("ph.typesay"); i.id = "say";
+    const say = (t) => speak(t, voiceEngine);
+    m.append(row(i, btn(t("say"), "go", () => { if (i.value.trim()) say(i.value.trim()); })));
+    m.append(row(btn(t("ph.krisvoice"), voiceEngine === "eleven" ? "on" : "", () => { voiceEngine = "eleven"; render(); }), btn(t("ph.builtin"), voiceEngine === "robot" ? "on" : "", () => { voiceEngine = "robot"; render(); })));
+    m.append(note(t("ph.voice.n")));
+    m.append(grid(QUICK.map((q) => tile("💬", q, () => say(q)))));
+    const vol = document.createElement("input"); vol.type = "range"; vol.min = 0; vol.max = 100; vol.value = HEALTH && HEALTH.volume != null ? HEALTH.volume : 70;
+    let vt; vol.oninput = () => { clearTimeout(vt); vt = setTimeout(() => api("/api/volume", { level: +vol.value }).then((r) => toast(t(r.live ? "ph.volume" : "ph.emuvolume", { n: r.level }))).catch((e) => toast("⚠️ " + e.message)), 250); };
+    m.append(row(el("span", "", "🔈"), vol, el("span", "", "🔊")));
+  },
+  Sound(m) {
+    if (!DEMO) m.append(btn(t("ph.addsound"), "go", () => $("file").click()));
+    m.append(note(t(DEMO ? "ph.sound.demo" : "ph.sound.app") + t("ph.sound.radio")));
+    if (SOUNDS.playing) m.append(row(el("b", "", "🔊 " + SOUNDS.playing), btn(t("ph.stopsound"), "on", async () => { await api("/api/sound_stop", {}); await loadSounds(); render(); })));
+    const fx = SOUNDS.sounds.filter((s) => s.secs <= 15), music = SOUNDS.sounds.filter((s) => s.secs > 15);
+    m.append(el("h3", "", t("ph.effects"))); m.append(grid(fx.map((s) => tile("✨", s.name, () => playSound(s.name), s.mine ? "•" : ""))));
+    if (music.length) m.append(el("h3", "", t("ph.music")));
+    music.forEach((s) => m.append(soundRow(s)));
+    const mine = fx.filter((s) => s.mine); if (mine.length) { m.append(el("h3", "", t("ph.yourfx"))); mine.forEach((s) => m.append(soundRow(s))); }
+    m.append(note(t("ph.sound.n1")));
+    m.append(note(t("ph.sound.n2")));
+  },
+  Camera(m) {
+    if (STATUS.camera) {
+      const img = el("img", "cam"); img.src = "/api/camera.mjpg?pin=" + encodeURIComponent(PIN) + "&t=" + Date.now(); img.alt = t("ph.cam.alt"); img.onerror = () => { m.prepend(note(t("ph.cam.nopic"), true)); };
+      m.append(img);
+      return;
+    }
+    m.append(note(DEMO ? t("ph.cam.demo") : t("ph.cam.none")));
+    if (DEMO) return;
+    const devs = (HEALTH && HEALTH.camera_devices) || [];
+    if (devs.length) m.append(note(t("ph.cam.found", { x: devs.join(", ") })));
+    else m.append(note(t("ph.cam.nonefound")));
+    const sources = devs.length ? devs : [0, 1, 2];
+    m.append(row(...sources.map((n) => btn(t("ph.cam.start", { n: String(n).replace("/dev/", "") }), "go", async () => { try { await api("/api/camera_start", { source: n }); STATUS = await api("/api/status"); render(); } catch (e) { toast("⚠️ " + e.message, 6000); } }))));
+  },
+  Factory(m) {
+    m.append(note(t("ph.fac.n"), true));
+    const it = (t, step) => { const e = t.split(" ")[0]; return tile(e, t.slice(e.length + 1), (b) => pick({ key: "factory_" + JSON.stringify(step), title: t, steps: [step] }, b)); };
+    m.append(el("h3", "", t("ph.dances"))); m.append(grid(FACTORY_DANCES.map(([t, id]) => it(t, { fsm: +id }))));
+    m.append(el("h3", "", t("ph.gestures"))); m.append(grid(GESTURES.map(([t, id]) => it(t, { arm_preset: +id }))));
+  },
+  Build(m) {
+    m.append(note(t("ph.build.n")));
+    m.append(grid(POSES.map((p) => tile(p.emoji, tf("pose." + p.label, p.label), () => { frames.push(p); render(); }))));
+    if (frames.length) {
+      const ol = el("ol");
+      frames.forEach((f, i) => { const li = el("li", "", tf("pose." + f.label, f.label) + " "); const x = btn("✕", "", () => { frames.splice(i, 1); render(); }); x.style.padding = "2px 8px"; li.append(x); ol.append(li); });
+      m.append(ol, row(...[[t("ph.snappy"), 0.2], [t("ph.steady"), 0.6], [t("ph.slow"), 1.2]].map(([t, s]) => btn(t, hold === s ? "on" : "", () => { hold = s; render(); }))));
+      m.append(row(btn(t("ph.preview"), "go", previewFrames), btn(t("clear"), "", () => { frames = []; render(); })));
+      const i = el("input"); i.placeholder = t("ph.nameit");
+      if (!DEMO) m.append(row(i, btn(t("save"), "", () => saveFrames(i.value))));
+    }
+    const mine = Object.keys(LIB.dances).filter((n) => n.startsWith("u_") && !LIB.dances[n].steps.every((s) => s.dance));
+    if (mine.length) { m.append(note(t("ph.savedmine"))); m.append(grid(danceTiles(mine))); }
+  },
+  Show(m) {
+    m.append(note(t("ph.show.n")));
+    m.append(btn(building ? t("ph.buildon") : t("ph.buildoff"), building ? "on" : "", () => { building = !building; render(); }));
+    if (show.length) {
+      const ol = el("ol"); show.forEach((s) => ol.append(el("li", "", s.label))); m.append(ol);
+      const item = () => ({ key: "show", title: t("ph.myshow"), steps: show.map((s) => ({ dance: s.name })) });
+      m.append(row(btn(t("ph.preview"), "go", () => { const b = building; building = false; openSheet(item()); building = b; }), btn(t("clear"), "", () => { show = []; render(); })));
+      const i = el("input"); i.placeholder = t("ph.showname");
+      if (!DEMO) m.append(row(i, btn(t("save"), "", async () => { try { await api("/api/save", { name: i.value, title: i.value, steps: show.map((s) => ({ dance: s.name })) }); LIB = await api("/api/library"); toast(t("ph.saved0")); render(); } catch (e) { toast("⚠️ " + e.message, 4000); } })));
+    }
+    const saved = Object.keys(LIB.dances).filter((n) => !LIB.dances[n].category && LIB.dances[n].steps.every((s) => s.dance));
+    if (saved.length) { m.append(note(t("ph.savedshows"))); m.append(grid(danceTiles(saved))); }
+  },
+};
+function render() {
+  const others = [...new Set(Object.values(LIB.dances).map((d) => d.category).filter((c) => c && !ORDER.includes(c)))];
+  const cats = ["Check", "Games", "Hands", "Voice", "Sound", "Camera", ...ORDER.slice(1).filter((c) => byCat(c).length), ...others, "Factory", "Build", "Show"];
+  $("tabs").replaceChildren(...cats.map((c) => { const b = el("button", c === tab ? "on" : "", catLabel(c)); b.type = "button"; b.onclick = () => { tab = c; if (c === "Check") refreshHealth(); if (c === "Sound") loadSounds().then(() => tab === "Sound" && render()); render(); window.scrollTo(0, 0); }; return b; }));
+  const m = $("main"); m.replaceChildren();
+  if (VIEWS[tab]) VIEWS[tab](m); else m.append(grid(danceTiles(byCat(tab))));
+}
+// the safety audit runs on this
+window.R1 = { analyze, danceItem, robot3d, lib: () => LIB, blocked, poses: () => POSES,
+  async tryFrames(list) { ARMROWS[DRAFT] = await framesToRows(list); return analyze({ steps: [{ arm_traj: DRAFT }] }); } };
+(async () => {
+  try {
+    [LIB, STATUS, QUICK, POSES] = await Promise.all([api("/api/library"), api("/api/status"), fetch("lines.json").then((r) => r.json()).then((j) => j.quick), fetch("poses.json").then((r) => r.json())]);
+    armed = !!STATUS.armed;
+    if (STATUS.pin) askPin();
+    paint(); render();
+    await loadSounds(); refreshHealth();
+  } catch (e) { $("main").replaceChildren(note(t("ph.noserver2"), true)); }
+})();
+</script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { t, tf } from "./i18n.js";
 // Camera + vision in the browser (MediaPipe, offline from /vendor):
 // hand signs · objects (80 everyday COCO classes) · colors · body pose. Source: this computer's camera
 // or the robot/server stream (/api/camera.mjpg).
@@ -126,12 +127,12 @@ export class Vision {
 
   // what the camera sees, in words
   describe() {
-    const names = [...new Set(this.objects.map((o) => o.name))];
+    const names = [...new Set(this.objects.map((o) => o.name))].map((n) => tf("acc." + n, "a " + n));
     const parts = [];
-    if (names.length) parts.push(names.length === 1 ? `a ${names[0]}` : names.slice(0, -1).map((n) => "a " + n).join(", ") + " and a " + names.slice(-1));
-    if (this.color) parts.push(`something ${this.color}`);
-    if (this.current) parts.push(`a hand sign ${NAMES[this.current] || ""}`);
-    return parts.length ? "I can see " + parts.join(", and ") + "." : "Hmm, I don't see anything I know yet.";
+    if (names.length) parts.push(names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + t("see.and") + names.slice(-1));
+    if (this.color) parts.push(t("see.color", { c: tf("color." + this.color, this.color) }));
+    if (this.current) parts.push(t("see.sign", { s: NAMES[this.current] || "" }));
+    return parts.length ? t("see.prefix") + parts.join(t("see.andlist")) + "." : t("see.nothing");
   }
 
   // finger curl 0..1 for the "copy my hand" mirror, Revo2 order

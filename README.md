@@ -1,5 +1,8 @@
 # r1-studio — Unitree R1 EDU Pro + BrainCo Revo2 control kit (Robotikos Akademija)
 
+Open source (MIT). Built by Kris Vas · Robotikos Akademija, Vilnius.
+**Start here:** [Tutorial / pamoka (LT + EN)](docs/TUTORIAL.md) · [Contributing](CONTRIBUTING.md) · [License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+
 Browser studio (blocks · 45-move deck · AI host · vision · telepresence) + terminal controller (`r1ctl`) + simulator preview, for a Unitree R1 EDU Pro.
 **Status 2026-10-23:** ✅ simulator + browser tested · ⚠️ not yet run on the real robot.
 
@@ -23,6 +26,6 @@ python3 -m venv .venv && .venv/bin/pip install mujoco pyyaml numpy "imageio[ffmp
 `brainco_hand_service/test/hand_cli.cpp` (+ one CMake line) is ours: copy it in after cloning.
 
 ## Licenses
-`studio/web/model/r1.*` is exported from Unitree's `unitree_mujoco` R1 model. Vendored libraries: Blockly (Apache-2.0), three.js (MIT), MediaPipe tasks-vision + models (Apache-2.0).
+Our code: MIT ([LICENSE](LICENSE)). Vendored and derived parts keep their own licences: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Safety: dry-run by default, GO prompt for live, Stop/Space everywhere, speed caps, gantry for first runs, no blades, kids behind 2 m.

@@ -1,7 +1,7 @@
 # G1 -> R1 portability + official simulators (2026-10-23)
 Scout: Sonnet 5.5. Status: DRAFT, appended as found. Labels: ✅ R1-verified (in local SDK) · 🟡 G1-only · ⚠️ unverified.
 
-## A1. Local SDK diff (✅ verified from /Users/kris/r1/unitree_sdk2, HEAD dated 2026-10-15)
+## A1. Local SDK diff (✅ verified from ~/r1/unitree_sdk2, HEAD dated 2026-10-15)
 | Item | G1 | R1 | Portable? |
 |---|---|---|---|
 | Low-level topics | rt/lowcmd, rt/lowstate (hg LowCmd_/LowState_) | same rt/lowcmd, rt/lowstate + rt/secondary_imu (torso IMU) | ✅ same msg types (idl/hg) |

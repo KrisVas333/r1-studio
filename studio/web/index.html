@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="lt">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,25 +10,29 @@
 <script src="vendor/blockly_compressed.js"></script>
 <script src="vendor/blocks_compressed.js"></script>
 <script src="vendor/en.js"></script>
+<script>/* Blockly's own menus (delete, duplicate, undo) in Lithuanian unless EN was picked */
+  (function () { var l = "lt"; try { l = localStorage.getItem("r1lang") || "lt"; } catch (e) {}
+    if (l === "lt") document.write('<script src="vendor/lt.js"><\/script>'); })();</script>
 <script type="importmap">{"imports": {"three": "./vendor/three.module.js"}}</script>
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="dot"></span>R1 Studio</div>
-  <input id="projectName" class="project" value="my_program" aria-label="Program name" spellcheck="false">
-  <div class="mode" role="group" aria-label="Where blocks run">
-    <button id="modeSim" class="on" title="Blocks move the 3D robot only">🖥️ Simulator</button>
-    <button id="modeLive" title="Blocks move the real R1">🤖 Robot</button>
+  <input id="projectName" class="project" value="my_program" data-i18n-aria="hdr.project" spellcheck="false">
+  <div class="mode" role="group" data-i18n-aria="hdr.where">
+    <button id="modeSim" class="on" data-i18n="hdr.sim" data-i18n-title="hdr.sim.t">🖥️ Simulator</button>
+    <button id="modeLive" data-i18n="hdr.live" data-i18n-title="hdr.live.t">🤖 Robot</button>
   </div>
   <div class="spacer"></div>
-  <button id="btnRun" class="run" title="Run (Enter)">▶ Run</button>
-  <button id="btnStop" class="stop" title="Stop (Space)">■ Stop</button>
-  <button id="btnSave" class="ghost" title="Save to the robot's library">💾 Save</button>
-  <button id="btnMenu" class="ghost" title="Examples, open, download">☰</button>
+  <span id="langBox"></span>
+  <button id="btnRun" class="run" data-i18n="hdr.run" data-i18n-title="hdr.run.t">▶ Run</button>
+  <button id="btnStop" class="stop" data-i18n="hdr.stop" data-i18n-title="hdr.stop.t">■ Stop</button>
+  <button id="btnSave" class="ghost" data-i18n="hdr.save" data-i18n-title="hdr.save.t">💾 Save</button>
+  <button id="btnMenu" class="ghost" data-i18n-title="hdr.menu.t">☰</button>
 </header>
 
 <main class="layout">
-  <section id="blockly" class="blocks" aria-label="Program blocks"></section>
+  <section id="blockly" class="blocks" data-i18n-aria="blocks.aria"></section>
 
   <section class="side">
     <div class="viewport">
@@ -37,47 +41,47 @@
       <div id="pip" class="pip hidden"><canvas id="pipCanvas" width="240" height="180"></canvas></div>
       <div id="banner" class="banner hidden"></div>
       <div class="chips">
-        <span id="chipMode" class="chip">SIMULATOR</span>
-        <span id="chipStatus" class="chip ghost">ready</span>
+        <span id="chipMode" class="chip" data-i18n="chip.sim">SIMULATOR</span>
+        <span id="chipStatus" class="chip ghost" data-i18n="st.ready">ready</span>
       </div>
       <div class="viewbtns">
-        <button data-view="front" title="Front view">Front</button>
-        <button data-view="side" title="Side view">Side</button>
-        <button data-view="close" title="Hands close-up">Hands</button>
+        <button data-view="front" data-i18n="view.front" data-i18n-title="view.front.t">Front</button>
+        <button data-view="side" data-i18n="view.side" data-i18n-title="view.side.t">Side</button>
+        <button data-view="close" data-i18n="view.close" data-i18n-title="view.close.t">Hands</button>
       </div>
     </div>
 
     <nav class="tabs" role="tablist">
-      <button class="tab on" data-tab="deck">🎛️ Deck</button>
-      <button class="tab" data-tab="camera">👁️ Camera</button>
-      <button class="tab" data-tab="drive">🎮 Drive</button>
-      <button class="tab" data-tab="ai">💬 AI</button>
-      <button class="tab" data-tab="joints">🎚️ Joints</button>
-      <button class="tab" data-tab="code">&lt;/&gt; Code</button>
-      <button class="tab" data-tab="log">📜 Log</button>
+      <button class="tab on" data-tab="deck" data-i18n="tab.deck">🎛️ Deck</button>
+      <button class="tab" data-tab="camera" data-i18n="tab.camera">👁️ Camera</button>
+      <button class="tab" data-tab="drive" data-i18n="tab.drive">🎮 Drive</button>
+      <button class="tab" data-tab="ai" data-i18n="tab.ai">💬 AI</button>
+      <button class="tab" data-tab="joints" data-i18n="tab.joints">🎚️ Joints</button>
+      <button class="tab" data-tab="code" data-i18n="tab.code">&lt;/&gt; Code</button>
+      <button class="tab" data-tab="log" data-i18n="tab.log">📜 Log</button>
     </nav>
 
     <div class="panel on" id="tab-deck">
-      <p class="muted deckhint">Click = play now · ＋ = add to program · keys 1–0 = first 10 emotions</p>
+      <p class="muted deckhint" data-i18n="deck.hint">Click = play now · ＋ = add to program · keys 1–0 = first 10 emotions</p>
       <div id="deck" class="deck"></div>
     </div>
 
     <div class="panel" id="tab-camera">
       <div class="camrow">
         <div class="cam" id="camBox"><video id="video" playsinline muted></video><img id="mjpeg" alt="" class="hidden"><canvas id="overlay"></canvas>
-          <div id="camEmpty" class="camEmpty">Camera off</div></div>
+          <div id="camEmpty" class="camEmpty" data-i18n="cam.off">Camera off</div></div>
         <div class="camside">
-          <select id="camSource" aria-label="Camera source">
-            <option value="off">Camera off</option>
-            <option value="webcam">This computer's camera</option>
-            <option value="robot">Robot / server camera</option>
+          <select id="camSource" data-i18n-aria="cam.source">
+            <option value="off" data-i18n="cam.off">Camera off</option>
+            <option value="webcam" data-i18n="cam.webcam">This computer's camera</option>
+            <option value="robot" data-i18n="cam.robot">Robot / server camera</option>
           </select>
-          <div class="seen"><span>I see</span><b id="seen">—</b></div>
-          <label class="tog"><input type="checkbox" id="vObjects" checked> objects</label>
-          <label class="tog"><input type="checkbox" id="vColors" checked> colors</label>
-          <label class="tog"><input type="checkbox" id="vPose"> body pose</label>
-          <button id="vDescribe" class="ghost">🗣️ What do you see?</button>
-          <p class="hint">Show ✊ ✋ ✌️ 👍 ☝️ or a ball, cup, color… <b>When I see…</b> blocks react.</p>
+          <div class="seen"><span data-i18n="cam.isee">I see</span><b id="seen">—</b></div>
+          <label class="tog"><input type="checkbox" id="vObjects" checked> <span data-i18n="cam.objects">objects</span></label>
+          <label class="tog"><input type="checkbox" id="vColors" checked> <span data-i18n="cam.colors">colors</span></label>
+          <label class="tog"><input type="checkbox" id="vPose"> <span data-i18n="cam.pose">body pose</span></label>
+          <button id="vDescribe" class="ghost" data-i18n="cam.describe">🗣️ What do you see?</button>
+          <p class="hint" data-i18n-html="cam.hint">Show ✊ ✋ ✌️ 👍 ☝️ or a ball, cup, color… <b>When I see…</b> blocks react.</p>
         </div>
       </div>
     </div>
@@ -85,65 +89,67 @@
     <div class="panel" id="tab-ai">
       <div id="chat" class="chat"></div>
       <form id="chatForm" class="chatform">
-        <button type="button" id="micBtn" class="mic" title="Talk (hold)">🎙️</button>
-        <input id="chatInput" placeholder="Talk to R1… (it can answer and move)" autocomplete="off">
-        <button class="send">Send</button>
+        <button type="button" id="micBtn" class="mic" data-i18n-title="ai.mic.t">🎙️</button>
+        <input id="chatInput" data-i18n-ph="ai.ph" placeholder="Talk to R1… (it can answer and move)" autocomplete="off">
+        <button class="send" data-i18n="send">Send</button>
       </form>
       <div id="emoRow" class="emorow"></div>
       <div class="chatopts">
-        <button type="button" id="pttBtn" class="ghost ptt" title="Hold to speak through the robot">🎙️ Talk as robot (hold)</button>
-        <label><input type="checkbox" id="operator"> 🧑‍✈️ Operator mode (I speak, no AI)</label>
-        <label><input type="checkbox" id="autoEmo" checked> auto emotions</label>
-        <label>Persona <select id="persona"></select></label>
-        <label><input type="checkbox" id="chatAct" checked> let AI move the robot</label>
-        <label><input type="checkbox" id="chatSpeak" checked> speak answers</label>
+        <button type="button" id="pttBtn" class="ghost ptt" data-i18n="ai.ptt" data-i18n-title="ai.ptt.t">🎙️ Talk as robot (hold)</button>
+        <label><input type="checkbox" id="operator"> <span data-i18n="ai.operator">🧑‍✈️ Operator mode (I speak, no AI)</span></label>
+        <label><input type="checkbox" id="autoEmo" checked> <span data-i18n="ai.autoemo">auto emotions</span></label>
+        <label><span data-i18n="ai.persona">Persona</span> <select id="persona"></select></label>
+        <label><span data-i18n="ai.answerlang">AI answers in</span> <select id="aiLang">
+          <option value="Lithuanian" data-i18n="ai.lang.lt">Lithuanian</option>
+          <option value="English" data-i18n="ai.lang.en">English</option></select></label>
+        <label><input type="checkbox" id="chatAct" checked> <span data-i18n="ai.act">let AI move the robot</span></label>
+        <label><input type="checkbox" id="chatSpeak" checked> <span data-i18n="ai.speak">speak answers</span></label>
         <span id="aiKey" class="muted"></span>
       </div>
     </div>
 
     <div class="panel" id="tab-drive">
       <div class="jointbar">
-        <label><input type="checkbox" id="driveOn"> <b>Enable driving</b></label>
-        <span class="muted" id="padStatus">🎮 no gamepad</span>
-        <button id="driveHome" class="ghost">Reset sim position</button>
+        <label><input type="checkbox" id="driveOn"> <b data-i18n="drv.enable">Enable driving</b></label>
+        <span class="muted" id="padStatus" data-i18n="drv.nopad">🎮 no gamepad</span>
+        <button id="driveHome" class="ghost" data-i18n="drv.reset">Reset sim position</button>
       </div>
       <div class="keys">
         <div class="keygrid"><span></span><kbd>W</kbd><span></span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
-        <div class="muted">W/S forward · back &nbsp; A/D turn &nbsp; Q/E step sideways &nbsp; Space = STOP<br>
-          Gamepad: left stick walk · right stick turn · A grab · B release · X happy · Y cheer · Start STOP</div>
+        <div class="muted" data-i18n-html="drv.keys">W/S forward · back</div>
       </div>
       <div class="handbtns">
-        <b>Hands</b>
-        <button data-hand="left,open" class="ghost">L open</button><button data-hand="left,fist" class="ghost">L fist</button>
-        <button data-hand="left,grab" class="ghost">L grab</button><button data-hand="left,release" class="ghost">L release</button>
-        <button data-hand="right,open" class="ghost">R open</button><button data-hand="right,fist" class="ghost">R fist</button>
-        <button data-hand="right,grab" class="ghost">R grab</button><button data-hand="right,release" class="ghost">R release</button>
+        <b data-i18n="drv.hands">Hands</b>
+        <button data-hand="left,open" class="ghost" data-i18n="drv.Lopen">L open</button><button data-hand="left,fist" class="ghost" data-i18n="drv.Lfist">L fist</button>
+        <button data-hand="left,grab" class="ghost" data-i18n="drv.Lgrab">L grab</button><button data-hand="left,release" class="ghost" data-i18n="drv.Lrelease">L release</button>
+        <button data-hand="right,open" class="ghost" data-i18n="drv.Ropen">R open</button><button data-hand="right,fist" class="ghost" data-i18n="drv.Rfist">R fist</button>
+        <button data-hand="right,grab" class="ghost" data-i18n="drv.Rgrab">R grab</button><button data-hand="right,release" class="ghost" data-i18n="drv.Rrelease">R release</button>
       </div>
-      <p class="muted">Turn the camera on in 👁️ Camera: it shows in the corner of the 3D view. Arms: 🎚️ Joints tab (tick "move real robot too").</p>
-      <p class="muted">⚠️ Quest 3: Unitree's official <b>xr_teleoperate</b> supports R1 + BrainCo hands. 6–12 h setup with an Ubuntu laptop + Wi‑Fi 6 router — next phase.</p>
+      <p class="muted" data-i18n="drv.note1">Turn the camera on in 👁️ Camera.</p>
+      <p class="muted" data-i18n-html="drv.note2">⚠️ Quest 3</p>
     </div>
 
     <div class="panel" id="tab-joints">
       <div class="jointbar">
-        <button id="jointsReset" class="ghost">Reset pose</button>
-        <button id="jointsBlock" class="ghost">➕ Add this pose as a block</button>
-        <label class="muted"><input type="checkbox" id="jointsLive"> move real robot too</label>
+        <button id="jointsReset" class="ghost" data-i18n="jt.reset">Reset pose</button>
+        <button id="jointsBlock" class="ghost" data-i18n="jt.block">➕ Add this pose as a block</button>
+        <label class="muted"><input type="checkbox" id="jointsLive"> <span data-i18n="jt.live">move real robot too</span></label>
       </div>
       <div class="timeline">
-        <div class="tlhead"><b>🎞️ Timeline</b> <span class="muted">pose with sliders → 📸 → repeat → ▶</span></div>
+        <div class="tlhead"><b data-i18n="jt.timeline">🎞️ Timeline</b> <span class="muted" data-i18n="jt.tlhint">pose with sliders → 📸 → repeat → ▶</span></div>
         <div class="tlbtns">
-          <button id="kfAdd" class="ghost">📸 Add keyframe</button>
-          <button id="kfPlay" class="ghost">▶ Play</button>
-          <button id="kfSave" class="ghost">💾 Save as arm move</button>
-          <button id="kfClear" class="ghost">Clear</button>
+          <button id="kfAdd" class="ghost" data-i18n="jt.kfadd">📸 Add keyframe</button>
+          <button id="kfPlay" class="ghost" data-i18n="jt.kfplay">▶ Play</button>
+          <button id="kfSave" class="ghost" data-i18n="jt.kfsave">💾 Save as arm move</button>
+          <button id="kfClear" class="ghost" data-i18n="clear">Clear</button>
         </div>
-        <div id="kfList" class="kflist"><span class="muted">No keyframes yet.</span></div>
+        <div id="kfList" class="kflist"><span class="muted" data-i18n="jt.kfnone">No keyframes yet.</span></div>
       </div>
       <div id="sliders" class="sliders"></div>
     </div>
 
     <div class="panel" id="tab-code">
-      <div class="jointbar"><span class="muted">What the robot receives (r1ctl dance file)</span><button id="copyCode" class="ghost">Copy</button></div>
+      <div class="jointbar"><span class="muted" data-i18n="code.what">What the robot receives (r1ctl dance file)</span><button id="copyCode" class="ghost" data-i18n="copy">Copy</button></div>
       <pre id="code" class="code"></pre>
     </div>
 
@@ -152,20 +158,20 @@
 </main>
 
 <div id="menu" class="menu hidden">
-  <h3>Examples</h3>
+  <h3 data-i18n="menu.examples">Examples</h3>
   <div id="examples" class="examples"></div>
-  <h3>Files</h3>
-  <button id="btnNew" class="ghost">New empty program</button>
-  <button id="btnDownload" class="ghost">⬇ Download program</button>
-  <label class="ghost filebtn">⬆ Open program file<input type="file" id="fileOpen" accept=".json" hidden></label>
-  <button id="btnLoadLib" class="ghost">Open a saved robot dance…</button>
+  <h3 data-i18n="menu.files">Files</h3>
+  <button id="btnNew" class="ghost" data-i18n="menu.new">New empty program</button>
+  <button id="btnDownload" class="ghost" data-i18n="menu.download">⬇ Download program</button>
+  <label class="ghost filebtn"><span data-i18n="menu.open">⬆ Open program file</span><input type="file" id="fileOpen" accept=".json" hidden></label>
+  <button id="btnLoadLib" class="ghost" data-i18n="menu.lib">Open a saved robot dance…</button>
 </div>
 
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
   <div class="modalbox">
     <h2 id="modalTitle"></h2>
     <div id="modalBody"></div>
-    <div class="modalbtns"><button id="modalNo" class="ghost">Cancel</button><button id="modalYes" class="run">OK</button></div>
+    <div class="modalbtns"><button id="modalNo" class="ghost" data-i18n="cancel">Cancel</button><button id="modalYes" class="run" data-i18n="ok">OK</button></div>
   </div>
 </div>
 

@@ -22,3 +22,12 @@ __pycache__/
 .env
 # yoga app is its own repo (KrisVas333/r1-joga), cloned here for deploy.sh
 r1-joga/
+# other local builds (never in this repo)
+cyclonedds-*/
+unitree_sdk2_python/
+.venv*/
+# sounds: only the public-domain / CC0 recordings ship publicly.
+# The ElevenLabs-generated effects and beds are rebuilt locally with studio/tools/make_sounds.py.
+studio/sounds/*
+!studio/sounds/Bach Prelude.wav
+!studio/sounds/Vivaldi Spring.wav
